@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_bhx_lucky_spin_prize_tree" model="ir.ui.view">
+        <field name="name">bhx_lucky_spin.prize.tree</field>
+        <field name="model">bhx_lucky_spin.prize</field>
+        <field name="arch" type="xml">
+            <tree string="Giải thưởng">
+                <field name="name"/>
+                <field name="campaign_id"/>
+                <field name="probability"/>
+                <field name="total_qty"/>
+                <field name="remaining_qty"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_bhx_lucky_spin_prize_form" model="ir.ui.view">
+        <field name="name">bhx_lucky_spin.prize.form</field>
+        <field name="model">bhx_lucky_spin.prize</field>
+        <field name="arch" type="xml">
+            <form string="Giải thưởng">
+                <sheet>
+                    <field name="image" widget="image" class="oe_avatar"/>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Tên giải thưởng..."/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="campaign_id"/>
+                            <field name="color" widget="color"/>
+                        </group>
+                        <group>
+                            <field name="probability"/>
+                            <field name="total_qty"/>
+                            <field name="remaining_qty" force_save="1" readonly="1"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_bhx_lucky_spin_prize" model="ir.actions.act_window">
+        <field name="name">Giải thưởng</field>
+        <field name="res_model">bhx_lucky_spin.prize</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+</odoo>

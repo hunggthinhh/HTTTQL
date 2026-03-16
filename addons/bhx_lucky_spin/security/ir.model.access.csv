@@ -1,0 +1,8 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_lucky_spin_campaign_user,bhx_lucky_spin.campaign.user,model_bhx_lucky_spin_campaign,base.group_user,1,1,1,1
+access_lucky_spin_prize_user,bhx_lucky_spin.prize.user,model_bhx_lucky_spin_prize,base.group_user,1,1,1,1
+access_lucky_spin_history_user,bhx_lucky_spin.history.user,model_bhx_lucky_spin_history,base.group_user,1,1,1,1
+
+access_lucky_spin_campaign_public,bhx_lucky_spin.campaign.public,model_bhx_lucky_spin_campaign,base.group_public,1,0,0,0
+access_lucky_spin_prize_public,bhx_lucky_spin.prize.public,model_bhx_lucky_spin_prize,base.group_public,1,0,0,0
+access_lucky_spin_history_public,bhx_lucky_spin.history.public,model_bhx_lucky_spin_history,base.group_public,1,0,1,0

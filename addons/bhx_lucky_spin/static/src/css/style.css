@@ -1,0 +1,157 @@
+/* Bách Hóa Xanh Theme Colors */
+:root {
+    --bhx-green: #007b3e;
+    --bhx-yellow: #fcdb04;
+    --bhx-light-green: #e6f2ec;
+    --bhx-dark-green: #005f30;
+}
+
+body {
+    background-color: #f5f5f5;
+    font-family: 'Open Sans', sans-serif;
+}
+
+.bhx-lucky-spin-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Header Styling */
+.bhx-header {
+    text-align: center;
+    margin-bottom: 40px;
+    background-color: var(--bhx-green);
+    color: var(--bhx-yellow);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+}
+
+.bhx-header h1 {
+    font-weight: 800;
+    margin: 0;
+    font-size: 2.5rem;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+}
+
+.bhx-logo {
+    max-height: 60px;
+}
+
+.campaign-title {
+    text-align: center;
+    color: var(--bhx-green);
+    font-weight: bold;
+    margin-bottom: 30px;
+    text-transform: uppercase;
+}
+
+/* Main Layout */
+.main-content {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 40px;
+}
+
+/* Wheel Section */
+.wheel-section {
+    flex: 1;
+    min-width: 320px;
+    display: flex;
+    justify-content: center;
+}
+
+.wheel-container {
+    position: relative;
+    width: 500px;
+    height: 500px;
+    max-width: 100%;
+}
+
+.wheel-pointer {
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 50px;
+    background-color: var(--bhx-yellow);
+    clip-path: polygon(50% 100%, 0 0, 100% 0);
+    z-index: 10;
+    filter: drop-shadow(0px 3px 3px rgba(0,0,0,0.3));
+}
+
+#luckyWheelCanvas {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    box-shadow: 0 0 15px rgba(0, 123, 62, 0.4);
+    border: 10px solid var(--bhx-green);
+    background-color: #fff;
+    /* transition is handled by JS but we ensure it's smooth here if modifying directly */
+    transition: transform 5s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+/* Form Section */
+.form-section {
+    flex: 1;
+    min-width: 320px;
+    max-width: 400px;
+}
+
+.lucky-card {
+    border: 2px solid var(--bhx-green);
+    border-radius: 15px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    background-color: white;
+}
+
+.lucky-card .card-body {
+    padding: 30px;
+}
+
+.bhx-btn-spin {
+    background-color: var(--bhx-yellow);
+    color: var(--bhx-green);
+    font-weight: bold;
+    font-size: 1.2rem;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.bhx-btn-spin:hover, .bhx-btn-spin:focus {
+    background-color: #f7d200;
+    color: var(--bhx-dark-green);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 8px rgba(0,0,0,0.15);
+}
+
+.bhx-btn-spin:disabled {
+    background-color: #ccc;
+    color: #666;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .wheel-container {
+        width: 320px;
+        height: 320px;
+    }
+    .bhx-header h1 {
+        font-size: 1.8rem;
+    }
+}

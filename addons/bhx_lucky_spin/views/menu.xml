@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Main Menu -->
+    <menuitem id="menu_bhx_lucky_spin_root" name="Vòng Quay Trúng Thưởng" web_icon="bhx_lucky_spin,static/description/icon.png" sequence="50"/>
+
+    <!-- Submenus -->
+    <menuitem id="menu_bhx_lucky_spin_campaign" name="Chiến dịch" parent="menu_bhx_lucky_spin_root" action="action_bhx_lucky_spin_campaign" sequence="10"/>
+    <menuitem id="menu_bhx_lucky_spin_prize" name="Giải thưởng" parent="menu_bhx_lucky_spin_root" action="action_bhx_lucky_spin_prize" sequence="20"/>
+    <menuitem id="menu_bhx_lucky_spin_history" name="Lịch sử quay" parent="menu_bhx_lucky_spin_root" action="action_bhx_lucky_spin_history" sequence="30"/>
+</odoo>

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="lucky_spin_page" name="Lucky Spin - Vòng Quay Trúng Thưởng">
+        <t t-call="web.layout">
+            <t t-set="title">Vòng Quay Trúng Thưởng - Bách Hóa Xanh</t>
+            <t t-set="head">
+                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"/>
+                <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700;800&amp;display=swap" rel="stylesheet"/>
+                <link rel="stylesheet" t-att-href="'/bhx_lucky_spin/static/src/css/style.css'"/>
+            </t>
+            <t t-set="body_classname">bg-light</t>
+
+            <div class="bhx-lucky-spin-container">
+                <div class="bhx-header">
+                    <h1>🎉 VÒNG QUAY MAY MẮN</h1>
+                    <p class="mb-0" style="font-size:1rem; color:#fcdb04;">Bách Hóa Xanh</p>
+                </div>
+
+                <t t-if="not campaign">
+                    <div class="text-center mt-5 p-5">
+                        <h3 style="color: #007b3e;">Hiện chưa có chương trình khuyến mãi nào đang diễn ra!</h3>
+                        <p class="text-muted">Vui lòng quay lại sau.</p>
+                    </div>
+                </t>
+                <t t-else="">
+                    <h3 class="campaign-title"><t t-esc="campaign.name"/></h3>
+
+                    <div class="main-content">
+                        <!-- Wheel Section -->
+                        <div class="wheel-section">
+                            <div class="wheel-container">
+                                <div class="wheel-pointer"></div>
+                                <canvas id="luckyWheelCanvas" width="500" height="500"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Form Section -->
+                        <div class="form-section">
+                            <div class="card lucky-card">
+                                <div class="card-body">
+                                    <h5 class="card-title text-center" style="color:#007b3e; font-weight:bold;">THÔNG TIN NGƯỜI QUAY</h5>
+                                    <div class="form-group mb-3">
+                                        <label for="customer_name">Họ và tên *</label>
+                                        <input type="text" class="form-control" id="customer_name" placeholder="Nhập họ và tên..."/>
+                                    </div>
+                                    <div class="form-group mb-4">
+                                        <label for="customer_phone">Số điện thoại *</label>
+                                        <input type="tel" class="form-control" id="customer_phone" placeholder="Nhập số điện thoại..."/>
+                                    </div>
+                                    <button type="button" id="btn-spin" class="btn bhx-btn-spin w-100">
+                                        QUAY NGAY! 🎰
+                                    </button>
+                                    <div id="result-message" class="alert mt-4 text-center d-none"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pass data to JS -->
+                    <script type="text/javascript">
+                        var LUCKY_SPIN_PRIZES = <t t-out="prizes"/>;
+                        var LUCKY_SPIN_CAMPAIGN_ID = <t t-out="campaign.id"/>;
+                    </script>
+                    <script type="text/javascript" t-att-src="'/bhx_lucky_spin/static/src/js/lucky_spin.js'"></script>
+                </t>
+            </div>
+        </t>
+    </template>
+</odoo>

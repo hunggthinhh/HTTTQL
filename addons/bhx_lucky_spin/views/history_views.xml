@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_bhx_lucky_spin_history_tree" model="ir.ui.view">
+        <field name="name">bhx_lucky_spin.history.tree</field>
+        <field name="model">bhx_lucky_spin.history</field>
+        <field name="arch" type="xml">
+            <tree string="Lịch sử quay thưởng" create="false" edit="false">
+                <field name="spin_date"/>
+                <field name="customer_name"/>
+                <field name="phone"/>
+                <field name="campaign_id"/>
+                <field name="prize_id"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_bhx_lucky_spin_history_search" model="ir.ui.view">
+        <field name="name">bhx_lucky_spin.history.search</field>
+        <field name="model">bhx_lucky_spin.history</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="customer_name"/>
+                <field name="phone"/>
+                <field name="campaign_id"/>
+                <group expand="0" string="Group By">
+                    <filter string="Chiến dịch" name="group_by_campaign" context="{'group_by':'campaign_id'}"/>
+                    <filter string="Giải thưởng" name="group_by_prize" context="{'group_by':'prize_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_bhx_lucky_spin_history" model="ir.actions.act_window">
+        <field name="name">Lịch sử quay thưởng</field>
+        <field name="res_model">bhx_lucky_spin.history</field>
+        <field name="view_mode">tree</field>
+        <field name="search_view_id" ref="view_bhx_lucky_spin_history_search"/>
+    </record>
+
+    <record id="action_bhx_lucky_spin_history_by_campaign" model="ir.actions.act_window">
+        <field name="name">Lịch sử quay thưởng</field>
+        <field name="res_model">bhx_lucky_spin.history</field>
+        <field name="view_mode">tree</field>
+        <field name="domain">[('campaign_id', '=', active_id)]</field>
+        <field name="context">{'default_campaign_id': active_id}</field>
+    </record>
+</odoo>

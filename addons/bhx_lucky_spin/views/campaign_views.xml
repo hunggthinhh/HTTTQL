@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_bhx_lucky_spin_campaign_tree" model="ir.ui.view">
+        <field name="name">bhx_lucky_spin.campaign.tree</field>
+        <field name="model">bhx_lucky_spin.campaign</field>
+        <field name="arch" type="xml">
+            <tree string="Chiến dịch Vòng Quay">
+                <field name="name"/>
+                <field name="start_date"/>
+                <field name="end_date"/>
+                <field name="total_spins"/>
+                <field name="active" widget="boolean_toggle"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_bhx_lucky_spin_campaign_form" model="ir.ui.view">
+        <field name="name">bhx_lucky_spin.campaign.form</field>
+        <field name="model">bhx_lucky_spin.campaign</field>
+        <field name="arch" type="xml">
+            <form string="Chiến dịch Vòng Quay">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="bhx_lucky_spin.action_bhx_lucky_spin_history_by_campaign" type="action" class="oe_stat_button" icon="fa-history">
+                            <field name="total_spins" widget="statinfo" string="Lượt quay"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Tên chiến dịch..."/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="start_date"/>
+                            <field name="end_date"/>
+                        </group>
+                        <group>
+                            <field name="active" widget="boolean_toggle"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Giải thưởng" name="prizes">
+                            <field name="prize_ids">
+                                <tree editable="bottom">
+                                    <field name="name"/>
+                                    <field name="probability"/>
+                                    <field name="total_qty"/>
+                                    <field name="remaining_qty" readonly="1"/>
+                                    <field name="color" widget="color"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Mô tả" name="description">
+                            <field name="description" nolabel="1" placeholder="Mô tả chiến dịch..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_bhx_lucky_spin_campaign" model="ir.actions.act_window">
+        <field name="name">Chiến dịch Vòng Quay</field>
+        <field name="res_model">bhx_lucky_spin.campaign</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Tạo chiến dịch vòng quay trúng thưởng mới!
+            </p>
+        </field>
+    </record>
+</odoo>
