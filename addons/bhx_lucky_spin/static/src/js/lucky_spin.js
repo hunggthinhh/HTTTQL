@@ -11,7 +11,12 @@
 
         var ctx = canvas.getContext('2d');
         var prizes = window.LUCKY_SPIN_PRIZES || [];
-        var campaignId = window.LUCKY_SPIN_CAMPAIGN_ID || 0;
+        var campaignId = parseInt(window.LUCKY_SPIN_CAMPAIGN_ID) || 0;
+        // If no active campaign, prevent spin
+        if (!campaignId) {
+            showResult('alert-warning', '⚠️ Không có chiến dịch đang hoạt động!');
+            return;
+        }
         var numSegments = prizes.length;
         var centerX = canvas.width / 2;
         var centerY = canvas.height / 2;
