@@ -1,0 +1,13 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_fmcg_import_user,bhx.fmcg.import user,model_bhx_fmcg_import,bhx_import_goods.group_import_user,1,1,1,0
+access_fmcg_import_manager,bhx.fmcg.import manager,model_bhx_fmcg_import,bhx_import_goods.group_import_manager,1,1,1,1
+access_fmcg_import_line_user,bhx.fmcg.import.line user,model_bhx_fmcg_import_line,bhx_import_goods.group_import_user,1,1,1,0
+access_fmcg_import_line_manager,bhx.fmcg.import.line manager,model_bhx_fmcg_import_line,bhx_import_goods.group_import_manager,1,1,1,1
+access_fruit_veg_import_user,bhx.fruit.veg.import user,model_bhx_fruit_veg_import,bhx_import_goods.group_import_user,1,1,1,0
+access_fruit_veg_import_manager,bhx.fruit.veg.import manager,model_bhx_fruit_veg_import,bhx_import_goods.group_import_manager,1,1,1,1
+access_fruit_veg_import_line_user,bhx.fruit.veg.import.line user,model_bhx_fruit_veg_import_line,bhx_import_goods.group_import_user,1,1,1,0
+access_fruit_veg_import_line_manager,bhx.fruit.veg.import.line manager,model_bhx_fruit_veg_import_line,bhx_import_goods.group_import_manager,1,1,1,1
+access_fresh_import_user,bhx.fresh.import user,model_bhx_fresh_import,bhx_import_goods.group_import_user,1,1,1,0
+access_fresh_import_manager,bhx.fresh.import manager,model_bhx_fresh_import,bhx_import_goods.group_import_manager,1,1,1,1
+access_fresh_import_line_user,bhx.fresh.import.line user,model_bhx_fresh_import_line,bhx_import_goods.group_import_user,1,1,1,0
+access_fresh_import_line_manager,bhx.fresh.import.line manager,model_bhx_fresh_import_line,bhx_import_goods.group_import_manager,1,1,1,1

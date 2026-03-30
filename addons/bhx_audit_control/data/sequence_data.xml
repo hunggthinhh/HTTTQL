@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="seq_inventory_count" model="ir.sequence">
+            <field name="name">Phiếu kiểm kê</field>
+            <field name="code">bhx.inventory.count</field>
+            <field name="prefix">KK/%(year)s/%(month)s/</field>
+            <field name="padding">4</field>
+        </record>
+        <record id="seq_goods_control" model="ir.sequence">
+            <field name="name">Phiếu kiểm soát hàng hoá</field>
+            <field name="code">bhx.goods.control</field>
+            <field name="prefix">KS/%(year)s/%(month)s/</field>
+            <field name="padding">4</field>
+        </record>
+        <record id="seq_disposal" model="ir.sequence">
+            <field name="name">Phiếu huỷ hàng</field>
+            <field name="code">bhx.disposal</field>
+            <field name="prefix">HH/%(year)s/%(month)s/</field>
+            <field name="padding">4</field>
+        </record>
+    </data>
+</odoo>

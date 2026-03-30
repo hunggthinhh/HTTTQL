@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Sequence FMCG -->
+        <record id="seq_fmcg_import" model="ir.sequence">
+            <field name="name">Phiếu nhập FMCG</field>
+            <field name="code">bhx.fmcg.import</field>
+            <field name="prefix">FMCG/%(year)s/%(month)s/</field>
+            <field name="padding">4</field>
+            <field name="number_increment">1</field>
+            <field name="use_date_range">False</field>
+        </record>
+
+        <!-- Sequence Rau củ trái cây -->
+        <record id="seq_fruit_veg_import" model="ir.sequence">
+            <field name="name">Phiếu nhập Rau củ trái cây</field>
+            <field name="code">bhx.fruit.veg.import</field>
+            <field name="prefix">RCV/%(year)s/%(month)s/</field>
+            <field name="padding">4</field>
+            <field name="number_increment">1</field>
+            <field name="use_date_range">False</field>
+        </record>
+
+        <!-- Sequence Fresh -->
+        <record id="seq_fresh_import" model="ir.sequence">
+            <field name="name">Phiếu nhập hàng Fresh</field>
+            <field name="code">bhx.fresh.import</field>
+            <field name="prefix">FRSH/%(year)s/%(month)s/</field>
+            <field name="padding">4</field>
+            <field name="number_increment">1</field>
+            <field name="use_date_range">False</field>
+        </record>
+    </data>
+</odoo>

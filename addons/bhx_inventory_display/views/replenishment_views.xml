@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- FORM -->
+    <record id="view_bhx_replenishment_form" model="ir.ui.view">
+        <field name="name">bhx.replenishment.form</field>
+        <field name="model">bhx.replenishment</field>
+        <field name="arch" type="xml">
+            <form string="Đợt châm hàng">
+                <header>
+                    <button name="action_confirm" string="Bắt đầu thực hiện"
+                            type="object" class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_done" string="Hoàn thành châm hàng"
+                            type="object" class="btn-success" invisible="state != 'in_progress'"/>
+                    <button name="action_cancel" string="Hủy đợt"
+                            type="object" class="btn-secondary" invisible="state in ('done', 'cancel')"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,in_progress,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="warehouse_id" readonly="state != 'draft'"/>
+                            <field name="user_id" readonly="state != 'draft'"/>
+                        </group>
+                        <group>
+                            <field name="date" readonly="state != 'draft'"/>
+                            <field name="total_items"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Danh sách sản phẩm châm hàng" name="lines">
+                            <field name="line_ids" readonly="state == 'done'">
+                                <tree editable="bottom">
+                                    <field name="product_id"/>
+                                    <field name="location_id" domain="[('warehouse_id', '=', parent.warehouse_id)]"/>
+                                    <field name="warehouse_stock_qty" string="Tồn kho dự trữ"
+                                           decoration-danger="warehouse_stock_qty == 0"
+                                           decoration-warning="warehouse_stock_qty &lt; qty_to_replenish"/>
+                                    <field name="current_shelf_qty"/>
+                                    <field name="qty_to_replenish"/>
+                                    <field name="uom_id" string="ĐVT"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- TREE -->
+    <record id="view_bhx_replenishment_tree" model="ir.ui.view">
+        <field name="name">bhx.replenishment.tree</field>
+        <field name="model">bhx.replenishment</field>
+        <field name="arch" type="xml">
+            <tree string="Đợt châm hàng" decoration-info="state == 'draft'" 
+                  decoration-warning="state == 'in_progress'"
+                  decoration-success="state == 'done'"
+                  decoration-muted="state == 'cancel'">
+                <field name="name"/>
+                <field name="date"/>
+                <field name="warehouse_id"/>
+                <field name="user_id"/>
+                <field name="total_items"/>
+                <field name="state" widget="badge" 
+                       decoration-info="state == 'draft'" 
+                       decoration-warning="state == 'in_progress'"
+                       decoration-success="state == 'done'"
+                       decoration-muted="state == 'cancel'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- ACTION -->
+    <record id="action_bhx_replenishment" model="ir.actions.act_window">
+        <field name="name">Đợt châm hàng</field>
+        <field name="res_model">bhx.replenishment</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Không có đợt châm hàng nào!</p>
+            <p>Đợt châm hàng giúp bạn quản lý việc di chuyển hàng từ kho sau lên kệ trưng bày.</p>
+        </field>
+    </record>
+</odoo>

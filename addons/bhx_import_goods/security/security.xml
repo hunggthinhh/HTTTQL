@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Category -->
+        <record id="module_category_import_goods" model="ir.module.category">
+            <field name="name">BHX Nhập Hàng</field>
+            <field name="sequence">20</field>
+        </record>
+
+        <!-- Groups -->
+        <record id="group_import_user" model="res.groups">
+            <field name="name">Nhân viên nhập hàng</field>
+            <field name="category_id" ref="module_category_import_goods"/>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+
+        <record id="group_import_manager" model="res.groups">
+            <field name="name">Quản lý nhập hàng</field>
+            <field name="category_id" ref="module_category_import_goods"/>
+            <field name="implied_ids" eval="[(4, ref('group_import_user'))]"/>
+            <field name="users" eval="[(4, ref('base.user_admin'))]"/>
+        </record>
+
+        <!-- Rules: FMCG -->
+        <record id="rule_fmcg_import_user" model="ir.rule">
+            <field name="name">Nhân viên nhập hàng: xem FMCG theo công ty</field>
+            <field name="model_id" ref="model_bhx_fmcg_import"/>
+            <field name="groups" eval="[(4, ref('group_import_user'))]"/>
+            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        </record>
+
+        <!-- Rules: Fruit Veg -->
+        <record id="rule_fruit_veg_import_user" model="ir.rule">
+            <field name="name">Nhân viên nhập hàng: xem Rau củ theo công ty</field>
+            <field name="model_id" ref="model_bhx_fruit_veg_import"/>
+            <field name="groups" eval="[(4, ref('group_import_user'))]"/>
+            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        </record>
+
+        <!-- Rules: Fresh -->
+        <record id="rule_fresh_import_user" model="ir.rule">
+            <field name="name">Nhân viên nhập hàng: xem Fresh theo công ty</field>
+            <field name="model_id" ref="model_bhx_fresh_import"/>
+            <field name="groups" eval="[(4, ref('group_import_user'))]"/>
+            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        </record>
+    </data>
+</odoo>

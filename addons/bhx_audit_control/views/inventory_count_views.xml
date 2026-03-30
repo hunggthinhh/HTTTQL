@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- FORM -->
+    <record id="view_inventory_count_form" model="ir.ui.view">
+        <field name="name">bhx.inventory.count.form</field>
+        <field name="model">bhx.inventory.count</field>
+        <field name="arch" type="xml">
+            <form string="Phiếu kiểm kê hàng hoá">
+                <header>
+                    <button name="action_start" string="Bắt đầu kiểm kê" type="object" class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_review" string="Gửi xét duyệt" type="object" class="btn-primary" invisible="state != 'in_progress'"/>
+                    <button name="action_approve" string="Phê duyệt" type="object" class="btn-success" invisible="state != 'review'" groups="bhx_audit_control.group_audit_manager"/>
+                    <button name="action_cancel" string="Huỷ" type="object" class="btn-danger" invisible="state in ('approved','cancel')"/>
+                    <button name="action_draft" string="Đặt lại" type="object" invisible="state != 'cancel'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,in_progress,review,approved"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <div class="oe_stat_button" icon="fa-list">
+                            <div class="o_stat_info">
+                                <span class="o_stat_value"><field name="total_products"/></span>
+                                <span class="o_stat_text">Sản phẩm</span>
+                            </div>
+                        </div>
+                    </div>
+                    <field name="has_diff" invisible="1"/>
+                    <widget name="web_ribbon" title="Có chênh lệch!" bg_color="bg-warning" invisible="not has_diff"/>
+                    <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+                    <group>
+                        <group string="Thông tin kiểm kê">
+                            <field name="date"/>
+                            <field name="count_type"/>
+                            <field name="zone"/>
+                            <field name="warehouse_id"/>
+                        </group>
+                        <group string="Nhân sự &amp; Thời gian">
+                            <field name="responsible_id"/>
+                            <field name="approved_id" readonly="1"/>
+                            <field name="start_time" readonly="1"/>
+                            <field name="end_time" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Chi tiết kiểm kê" name="lines">
+                            <field name="line_ids">
+                                <tree editable="bottom"
+                                      decoration-danger="qty_diff &lt; 0"
+                                      decoration-warning="qty_diff &gt; 0">
+                                    <field name="product_id"/>
+                                    <field name="barcode" optional="hide"/>
+                                    <field name="lot_id" optional="show"/>
+                                    <field name="expiry_date" optional="show"/>
+                                    <field name="location_detail"/>
+                                    <field name="qty_system"/>
+                                    <field name="qty_counted"/>
+                                    <field name="qty_diff" readonly="1"/>
+                                    <field name="diff_reason" optional="show"/>
+                                    <field name="note" optional="hide"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Ghi chú" name="notes">
+                            <field name="note"/>
+                        </page>
+                    </notebook>
+                    <group>
+                        <group/>
+                        <group class="oe_subtotal_footer">
+                            <field name="total_diff" string="Tổng chênh lệch (tuyệt đối)"/>
+                        </group>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- TREE -->
+    <record id="view_inventory_count_tree" model="ir.ui.view">
+        <field name="name">bhx.inventory.count.tree</field>
+        <field name="model">bhx.inventory.count</field>
+        <field name="arch" type="xml">
+            <tree decoration-success="state == 'approved'"
+                  decoration-warning="state == 'review'"
+                  decoration-muted="state == 'cancel'">
+                <field name="name"/>
+                <field name="date"/>
+                <field name="count_type"/>
+                <field name="zone"/>
+                <field name="warehouse_id"/>
+                <field name="responsible_id"/>
+                <field name="total_products"/>
+                <field name="has_diff" string="Có chênh lệch"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'draft'"
+                       decoration-warning="state in ('in_progress','review')"
+                       decoration-success="state == 'approved'"
+                       decoration-danger="state == 'cancel'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- SEARCH -->
+    <record id="view_inventory_count_search" model="ir.ui.view">
+        <field name="name">bhx.inventory.count.search</field>
+        <field name="model">bhx.inventory.count</field>
+        <field name="arch" type="xml">
+            <search string="Tìm phiếu kiểm kê">
+                <field name="name"/>
+                <field name="warehouse_id"/>
+                <filter string="Kế hoạch" name="draft" domain="[('state','=','draft')]"/>
+                <filter string="Đang kiểm" name="in_progress" domain="[('state','=','in_progress')]"/>
+                <filter string="Chờ duyệt" name="review" domain="[('state','=','review')]"/>
+                <filter string="Có chênh lệch" name="has_diff" domain="[('has_diff','=',True)]"/>
+                <group expand="0" string="Nhóm theo">
+                    <filter string="Loại kiểm kê" name="group_type" context="{'group_by':'count_type'}"/>
+                    <filter string="Khu vực" name="group_zone" context="{'group_by':'zone'}"/>
+                    <filter string="Tháng" name="group_month" context="{'group_by':'date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ACTION -->
+    <record id="action_inventory_count" model="ir.actions.act_window">
+        <field name="name">Kiểm kê hàng hoá</field>
+        <field name="res_model">bhx.inventory.count</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Tạo phiếu kiểm kê đầu tiên!</p>
+        </field>
+    </record>
+</odoo>

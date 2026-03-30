@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ═══════ FORM VIEW ═══════ -->
+    <record id="view_fruit_veg_import_form" model="ir.ui.view">
+        <field name="name">bhx.fruit.veg.import.form</field>
+        <field name="model">bhx.fruit.veg.import</field>
+        <field name="arch" type="xml">
+            <form string="Nhập rau củ trái cây">
+                <header>
+                    <button name="action_start_receiving" string="Bắt đầu nhận hàng"
+                            type="object" class="btn-primary"
+                            invisible="state != 'draft'"/>
+                    <button name="action_quality_check" string="Kiểm tra chất lượng"
+                            type="object" class="btn-primary"
+                            invisible="state != 'receiving'"/>
+                    <button name="action_confirm_done" string="Xác nhận hoàn thành"
+                            type="object" class="btn-primary"
+                            invisible="state != 'quality_check'"/>
+                    <button name="action_cancel" string="Huỷ phiếu"
+                            type="object" class="btn-danger"
+                            invisible="state in ('done', 'cancel')"/>
+                    <button name="action_draft" string="Đặt lại nháp"
+                            type="object"
+                            invisible="state not in ('cancel',)"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,receiving,quality_check,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="Thông tin nhập hàng">
+                            <field name="date"/>
+                            <field name="time_slot"/>
+                            <field name="supplier_id"/>
+                            <field name="origin"/>
+                            <field name="harvest_date"/>
+                        </group>
+                        <group string="Thông tin kho &amp; vận chuyển">
+                            <field name="warehouse_id"/>
+                            <field name="responsible_id"/>
+                            <field name="vehicle_plate"/>
+                            <field name="temperature_check"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="company_id" invisible="1"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Chi tiết rau củ trái cây" name="lines">
+                            <field name="line_ids" widget="one2many_list">
+                                <tree editable="bottom">
+                                    <field name="product_id"/>
+                                    <field name="category"/>
+                                    <field name="origin_detail" optional="hide"/>
+                                    <field name="expected_weight"/>
+                                    <field name="weight"/>
+                                    <field name="rejected_weight"/>
+                                    <field name="quality_grade"/>
+                                    <field name="freshness_check"/>
+                                    <field name="unit_price"/>
+                                    <field name="subtotal"/>
+                                    <field name="note" optional="hide"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Ghi chú" name="notes">
+                            <field name="note" placeholder="Ghi chú thêm về lô hàng..."/>
+                        </page>
+                    </notebook>
+
+                    <group>
+                        <group/>
+                        <group class="oe_subtotal_footer">
+                            <field name="total_weight" string="Tổng trọng lượng (kg)"/>
+                            <field name="total_value" string="Tổng giá trị" widget="monetary"/>
+                        </group>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- ═══════ TREE VIEW ═══════ -->
+    <record id="view_fruit_veg_import_tree" model="ir.ui.view">
+        <field name="name">bhx.fruit.veg.import.tree</field>
+        <field name="model">bhx.fruit.veg.import</field>
+        <field name="arch" type="xml">
+            <tree string="Phiếu nhập rau củ" decoration-success="state == 'done'"
+                  decoration-warning="state == 'quality_check'"
+                  decoration-info="state == 'receiving'"
+                  decoration-muted="state == 'cancel'">
+                <field name="name"/>
+                <field name="date"/>
+                <field name="time_slot"/>
+                <field name="supplier_id"/>
+                <field name="origin"/>
+                <field name="warehouse_id"/>
+                <field name="responsible_id"/>
+                <field name="total_weight"/>
+                <field name="total_value" widget="monetary"/>
+                <field name="currency_id" invisible="1"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'done'"
+                       decoration-warning="state == 'quality_check'"
+                       decoration-info="state in ('draft', 'receiving')"
+                       decoration-danger="state == 'cancel'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- ═══════ SEARCH VIEW ═══════ -->
+    <record id="view_fruit_veg_import_search" model="ir.ui.view">
+        <field name="name">bhx.fruit.veg.import.search</field>
+        <field name="model">bhx.fruit.veg.import</field>
+        <field name="arch" type="xml">
+            <search string="Tìm phiếu rau củ">
+                <field name="name" string="Mã phiếu"/>
+                <field name="supplier_id"/>
+                <field name="origin"/>
+                <filter string="Ca sáng" name="morning" domain="[('time_slot','=','morning')]"/>
+                <filter string="Ca chiều" name="afternoon" domain="[('time_slot','=','afternoon')]"/>
+                <filter string="Hoàn thành" name="done" domain="[('state','=','done')]"/>
+                <filter string="Hôm nay" name="today"
+                        domain="[('date','=', context_today().strftime('%Y-%m-%d'))]"/>
+                <group expand="0" string="Nhóm theo">
+                    <filter string="Nhà cung cấp" name="group_supplier" context="{'group_by':'supplier_id'}"/>
+                    <filter string="Ca" name="group_slot" context="{'group_by':'time_slot'}"/>
+                    <filter string="Tháng" name="group_month" context="{'group_by':'date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ═══════ ACTION ═══════ -->
+    <record id="action_fruit_veg_import" model="ir.actions.act_window">
+        <field name="name">Nhập rau củ trái cây</field>
+        <field name="res_model">bhx.fruit.veg.import</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_fruit_veg_import_search"/>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Tạo phiếu nhập rau củ trái cây đầu tiên!
+            </p>
+            <p>Quản lý việc nhận và kiểm tra chất lượng rau củ trái cây mỗi ngày.</p>
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ═══════ FORM VIEW ═══════ -->
+    <record id="view_fresh_import_form" model="ir.ui.view">
+        <field name="name">bhx.fresh.import.form</field>
+        <field name="model">bhx.fresh.import</field>
+        <field name="arch" type="xml">
+            <form string="Nhập hàng Fresh">
+                <header>
+                    <button name="action_start_receiving" string="Bắt đầu nhận hàng"
+                            type="object" class="btn-primary"
+                            invisible="state != 'draft'"/>
+                    <button name="action_temp_check" string="Kiểm nhiệt độ &amp; ATTP"
+                            type="object" class="btn-primary"
+                            invisible="state != 'receiving'"/>
+                    <button name="action_confirm_done" string="Xác nhận nhập kho"
+                            type="object" class="btn-primary"
+                            invisible="state != 'temp_check'"/>
+                    <button name="action_reject" string="Từ chối nhận hàng"
+                            type="object" class="btn-danger"
+                            invisible="state not in ('receiving', 'temp_check')"/>
+                    <button name="action_cancel" string="Huỷ phiếu"
+                            type="object"
+                            invisible="state in ('done', 'cancel', 'reject')"/>
+                    <button name="action_draft" string="Đặt lại nháp"
+                            type="object"
+                            invisible="state not in ('cancel', 'reject')"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,receiving,temp_check,done"/>
+                </header>
+                <sheet>
+                    <widget name="web_ribbon" title="Từ chối nhận"
+                            bg_color="bg-danger"
+                            invisible="state != 'reject'"/>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="Thông tin nhập hàng">
+                            <field name="date"/>
+                            <field name="fresh_type"/>
+                            <field name="supplier_id"/>
+                            <field name="slaughter_date"/>
+                            <field name="expiry_date"/>
+                        </group>
+                        <group string="Kiểm tra ATTP &amp; Nhiệt độ">
+                            <field name="vehicle_plate"/>
+                            <field name="temperature_arrival"/>
+                            <field name="temperature_storage"/>
+                            <field name="health_cert_no"/>
+                            <field name="veterinary_cert"/>
+                            <field name="vn_standard_check"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Kho nhập">
+                            <field name="warehouse_id"/>
+                            <field name="responsible_id"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="company_id" invisible="1"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Chi tiết hàng Fresh" name="lines">
+                            <field name="line_ids" widget="one2many_list">
+                                <tree editable="bottom">
+                                    <field name="product_id"/>
+                                    <field name="product_code" optional="hide"/>
+                                    <field name="cut_type"/>
+                                    <field name="lot_no" optional="hide"/>
+                                    <field name="expected_weight"/>
+                                    <field name="weight"/>
+                                    <field name="rejected_weight"/>
+                                    <field name="color_check"/>
+                                    <field name="smell_check"/>
+                                    <field name="texture_check"/>
+                                    <field name="unit_price"/>
+                                    <field name="subtotal"/>
+                                    <field name="note" optional="hide"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Ghi chú / Vấn đề phát hiện" name="notes">
+                            <field name="note" placeholder="Ghi lại các vấn đề về hàng hóa nếu có..."/>
+                        </page>
+                    </notebook>
+
+                    <group>
+                        <group/>
+                        <group class="oe_subtotal_footer">
+                            <field name="total_weight" string="Tổng trọng lượng (kg)"/>
+                            <field name="total_value" string="Tổng giá trị" widget="monetary"/>
+                        </group>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- ═══════ TREE VIEW ═══════ -->
+    <record id="view_fresh_import_tree" model="ir.ui.view">
+        <field name="name">bhx.fresh.import.tree</field>
+        <field name="model">bhx.fresh.import</field>
+        <field name="arch" type="xml">
+            <tree string="Phiếu nhập Fresh" decoration-success="state == 'done'"
+                  decoration-danger="state == 'reject'"
+                  decoration-warning="state == 'temp_check'"
+                  decoration-muted="state == 'cancel'">
+                <field name="name"/>
+                <field name="date"/>
+                <field name="fresh_type"/>
+                <field name="supplier_id"/>
+                <field name="expiry_date"/>
+                <field name="temperature_arrival"/>
+                <field name="health_cert_no"/>
+                <field name="warehouse_id"/>
+                <field name="total_weight"/>
+                <field name="total_value" widget="monetary"/>
+                <field name="currency_id" invisible="1"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'done'"
+                       decoration-danger="state in ('reject', 'cancel')"
+                       decoration-warning="state == 'temp_check'"
+                       decoration-info="state in ('draft', 'receiving')"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- ═══════ SEARCH VIEW ═══════ -->
+    <record id="view_fresh_import_search" model="ir.ui.view">
+        <field name="name">bhx.fresh.import.search</field>
+        <field name="model">bhx.fresh.import</field>
+        <field name="arch" type="xml">
+            <search string="Tìm phiếu nhập Fresh">
+                <field name="name" string="Mã phiếu"/>
+                <field name="supplier_id"/>
+                <field name="health_cert_no"/>
+                <filter string="Thịt" name="meat" domain="[('fresh_type','=','meat')]"/>
+                <filter string="Hải sản" name="seafood" domain="[('fresh_type','=','seafood')]"/>
+                <filter string="Sữa tươi" name="dairy" domain="[('fresh_type','=','dairy')]"/>
+                <separator/>
+                <filter string="Hoàn thành" name="done" domain="[('state','=','done')]"/>
+                <filter string="Từ chối" name="reject" domain="[('state','=','reject')]"/>
+                <filter string="Hôm nay" name="today"
+                        domain="[('date','&gt;=', context_today().strftime('%Y-%m-%d 00:00:00')),
+                                 ('date','&lt;', (context_today() + datetime.timedelta(days=1)).strftime('%Y-%m-%d 00:00:00'))]"/>
+                <group expand="0" string="Nhóm theo">
+                    <filter string="Loại hàng" name="group_type" context="{'group_by':'fresh_type'}"/>
+                    <filter string="Nhà cung cấp" name="group_supplier" context="{'group_by':'supplier_id'}"/>
+                    <filter string="Tháng" name="group_month" context="{'group_by':'date:month'}"/>
+                    <filter string="Trạng thái" name="group_state" context="{'group_by':'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ═══════ ACTION ═══════ -->
+    <record id="action_fresh_import" model="ir.actions.act_window">
+        <field name="name">Nhập hàng Fresh</field>
+        <field name="res_model">bhx.fresh.import</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_fresh_import_search"/>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Tạo phiếu nhập hàng Fresh đầu tiên!
+            </p>
+            <p>Quản lý nhập và kiểm tra ATTP hàng thịt, cá, hải sản, sữa tươi...</p>
+        </field>
+    </record>
+
+</odoo>

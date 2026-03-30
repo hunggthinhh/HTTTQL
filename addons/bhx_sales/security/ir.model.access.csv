@@ -1,0 +1,9 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_sales_shift_user,bhx.sales.shift user,model_bhx_sales_shift,bhx_sales.group_sales_user,1,1,1,0
+access_sales_shift_manager,bhx.sales.shift manager,model_bhx_sales_shift,bhx_sales.group_sales_manager,1,1,1,1
+access_sales_order_user,bhx.sales.order user,model_bhx_sales_order,bhx_sales.group_sales_user,1,1,1,0
+access_sales_order_manager,bhx.sales.order manager,model_bhx_sales_order,bhx_sales.group_sales_manager,1,1,1,1
+access_sales_order_line_user,bhx.sales.order.line user,model_bhx_sales_order_line,bhx_sales.group_sales_user,1,1,1,0
+access_sales_order_line_manager,bhx.sales.order.line manager,model_bhx_sales_order_line,bhx_sales.group_sales_manager,1,1,1,1
+access_promotion_user,bhx.promotion user,model_bhx_promotion,bhx_sales.group_sales_user,1,0,0,0
+access_promotion_manager,bhx.promotion manager,model_bhx_promotion,bhx_sales.group_sales_manager,1,1,1,1

@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- FORM -->
+    <record id="view_disposal_form" model="ir.ui.view">
+        <field name="name">bhx.disposal.form</field>
+        <field name="model">bhx.disposal</field>
+        <field name="arch" type="xml">
+            <form string="Phiếu xử lý / Huỷ hàng">
+                <header>
+                    <button name="action_confirm" string="Gửi duyệt" type="object" class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_approve" string="Phê duyệt" type="object" class="btn-success" invisible="state != 'confirm'" groups="bhx_audit_control.group_audit_manager"/>
+                    <button name="action_done" string="Đã thực hiện huỷ" type="object" class="btn-primary" invisible="state != 'approved'"/>
+                    <button name="action_cancel" string="Huỷ phiếu" type="object" class="btn-danger" invisible="state in ('done','cancel')"/>
+                    <button name="action_draft" string="Đặt lại" type="object" invisible="state != 'cancel'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,confirm,approved,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+                    <group>
+                        <group string="Thông tin phiếu">
+                            <field name="date"/>
+                            <field name="disposal_type"/>
+                            <field name="disposal_method"/>
+                            <field name="warehouse_id"/>
+                        </group>
+                        <group string="Nhân sự &amp; Chứng từ">
+                            <field name="responsible_id"/>
+                            <field name="approved_id" readonly="1"/>
+                            <field name="witness_name"/>
+                            <field name="photo_evidence"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Chi tiết hàng huỷ" name="lines">
+                            <field name="line_ids">
+                                <tree editable="bottom">
+                                    <field name="product_id"/>
+                                    <field name="lot_id" optional="show"/>
+                                    <field name="expiry_date" optional="show"/>
+                                    <field name="condition"/>
+                                    <field name="qty"/>
+                                    <field name="product_uom_id"/>
+                                    <field name="unit_cost"/>
+                                    <field name="subtotal" readonly="1"/>
+                                    <field name="note" optional="hide"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Mô tả tình trạng" name="notes">
+                            <field name="note"/>
+                        </page>
+                    </notebook>
+                    <group>
+                        <group/>
+                        <group class="oe_subtotal_footer">
+                            <field name="total_value" string="Tổng giá trị huỷ" widget="monetary"/>
+                        </group>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- TREE -->
+    <record id="view_disposal_tree" model="ir.ui.view">
+        <field name="name">bhx.disposal.tree</field>
+        <field name="model">bhx.disposal</field>
+        <field name="arch" type="xml">
+            <tree decoration-success="state == 'done'"
+                  decoration-warning="state == 'confirm'"
+                  decoration-muted="state == 'cancel'">
+                <field name="name"/>
+                <field name="date"/>
+                <field name="disposal_type"/>
+                <field name="disposal_method"/>
+                <field name="warehouse_id"/>
+                <field name="responsible_id"/>
+                <field name="total_value" widget="monetary"/>
+                <field name="currency_id" invisible="1"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'draft'"
+                       decoration-warning="state == 'confirm'"
+                       decoration-primary="state == 'approved'"
+                       decoration-success="state == 'done'"
+                       decoration-danger="state == 'cancel'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- SEARCH -->
+    <record id="view_disposal_search" model="ir.ui.view">
+        <field name="name">bhx.disposal.search</field>
+        <field name="model">bhx.disposal</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="warehouse_id"/>
+                <filter string="Chờ duyệt" name="confirm" domain="[('state','=','confirm')]"/>
+                <filter string="Hàng hết hạn" name="expire" domain="[('disposal_type','=','expire')]"/>
+                <filter string="Hàng hư hỏng" name="damage" domain="[('disposal_type','=','damage')]"/>
+                <group expand="0" string="Nhóm theo">
+                    <filter string="Lý do huỷ" name="group_type" context="{'group_by':'disposal_type'}"/>
+                    <filter string="Tháng" name="group_month" context="{'group_by':'date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ACTION -->
+    <record id="action_disposal" model="ir.actions.act_window">
+        <field name="name">Xử lý / Huỷ hàng</field>
+        <field name="res_model">bhx.disposal</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Tạo phiếu huỷ hàng đầu tiên!</p>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_bhx_inventory_dashboard_kanban" model="ir.ui.view">
+        <field name="name">bhx.inventory.dashboard.kanban</field>
+        <field name="model">bhx.inventory.dashboard</field>
+        <field name="arch" type="xml">
+            <kanban create="false" class="oe_background_grey o_kanban_dashboard">
+                <field name="name"/>
+                <field name="code"/>
+                <field name="color"/>
+                <field name="count_pending"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div t-attf-class="{{kanban_color(record.color.raw_value)}} oe_kanban_global_click">
+                            <!-- Dropdown for Color -->
+                            <div class="o_dropdown_kanban dropdown">
+                                <a role="button" class="dropdown-toggle o-no-caret btn" data-bs-toggle="dropdown" href="#" aria-label="Dropdown menu" title="Dropdown menu">
+                                    <span class="fa fa-ellipsis-v"/>
+                                </a>
+                                <div class="dropdown-menu" role="menu">
+                                    <ul class="oe_kanban_colorpicker" data-field="color"/>
+                                </div>
+                            </div>
+                            
+                            <!-- Card Content -->
+                            <div class="o_kanban_card_header">
+                                <div class="o_kanban_card_header_title">
+                                    <div class="mt-2 text-center">
+                                        <a href="#" class="o_kanban_card_header_title_name text-decoration-none">
+                                            <h3 class="fw-bold"><t t-esc="record.name.value"/></h3>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="container o_kanban_card_content mt-3">
+                                <div class="row">
+                                    <div class="col-8 o_kanban_primary_left">
+                                        <button class="btn btn-primary" name="action_open_records" type="object">
+                                            <t t-esc="record.count_pending.value"/> Cần xử lý
+                                        </button>
+                                    </div>
+                                    <div class="col-4 o_kanban_primary_right text-end pt-2">
+                                        <!-- Placeholder for extra actions -->
+                                        <span class="text-muted fa fa-clock-o"> Hôm nay</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Form View just in case user clicks edit -->
+    <record id="view_bhx_inventory_dashboard_form" model="ir.ui.view">
+        <field name="name">bhx.inventory.dashboard.form</field>
+        <field name="model">bhx.inventory.dashboard</field>
+        <field name="arch" type="xml">
+            <form string="Nghiệp vụ Bách Hóa Xanh">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="code"/>
+                        <field name="sequence"/>
+                        <field name="color"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_bhx_inventory_dashboard" model="ir.actions.act_window">
+        <field name="name">Tổng Quan BHX</field>
+        <field name="res_model">bhx.inventory.dashboard</field>
+        <field name="view_mode">kanban,form</field>
+    </record>
+</odoo>

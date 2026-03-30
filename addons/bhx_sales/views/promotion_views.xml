@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- FORM -->
+    <record id="view_promotion_form" model="ir.ui.view">
+        <field name="name">bhx.promotion.form</field>
+        <field name="model">bhx.promotion</field>
+        <field name="arch" type="xml">
+            <form string="Chương trình khuyến mãi">
+                <sheet>
+                    <widget name="web_ribbon" title="Đang áp dụng" bg_color="bg-success" invisible="state != 'active'"/>
+                    <widget name="web_ribbon" title="Đã kết thúc" bg_color="bg-secondary" invisible="state != 'expired'"/>
+                    <div class="oe_title">
+                        <h1><field name="name"/></h1>
+                        <h3 class="text-muted"><field name="code" placeholder="Mã KM (tuỳ chọn)"/></h3>
+                    </div>
+                    <group>
+                        <group string="Thông tin KM">
+                            <field name="promo_type"/>
+                            <field name="discount_pct" invisible="promo_type != 'discount_pct'"/>
+                            <field name="discount_amt" invisible="promo_type != 'discount_amt'"/>
+                            <field name="min_order_amt"/>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                            <field name="state" widget="badge"
+                                   decoration-success="state == 'active'"
+                                   decoration-info="state == 'upcoming'"
+                                   decoration-muted="state == 'expired'"/>
+                        </group>
+                        <group string="Phạm vi áp dụng">
+                            <field name="applies_all"/>
+                            <field name="product_ids" widget="many2many_tags" invisible="applies_all"/>
+                            <field name="warehouse_ids" widget="many2many_tags"/>
+                            <field name="usage_limit"/>
+                            <field name="usage_count" readonly="1"/>
+                            <field name="active"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                    </group>
+                    <group string="Mô tả &amp; Điều kiện">
+                        <field name="description" nolabel="1"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- TREE -->
+    <record id="view_promotion_tree" model="ir.ui.view">
+        <field name="name">bhx.promotion.tree</field>
+        <field name="model">bhx.promotion</field>
+        <field name="arch" type="xml">
+            <tree decoration-success="state == 'active'"
+                  decoration-info="state == 'upcoming'"
+                  decoration-muted="state == 'expired'">
+                <field name="name"/>
+                <field name="code"/>
+                <field name="promo_type"/>
+                <field name="discount_pct" optional="show"/>
+                <field name="discount_amt" optional="show"/>
+                <field name="date_from"/>
+                <field name="date_to"/>
+                <field name="usage_count"/>
+                <field name="usage_limit"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'active'"
+                       decoration-info="state == 'upcoming'"
+                       decoration-muted="state == 'expired'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- SEARCH -->
+    <record id="view_promotion_search" model="ir.ui.view">
+        <field name="name">bhx.promotion.search</field>
+        <field name="model">bhx.promotion</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="code"/>
+                <filter string="Đang áp dụng" name="active_promo" domain="[('state','=','active')]"/>
+                <filter string="Sắp diễn ra" name="upcoming" domain="[('state','=','upcoming')]"/>
+                <filter string="Đã kết thúc" name="expired" domain="[('state','=','expired')]"/>
+                <group expand="0" string="Nhóm theo">
+                    <filter string="Loại KM" name="group_type" context="{'group_by':'promo_type'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ACTION -->
+    <record id="action_promotion" model="ir.actions.act_window">
+        <field name="name">Chương trình khuyến mãi</field>
+        <field name="res_model">bhx.promotion</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'search_default_active_promo': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Tạo chương trình khuyến mãi đầu tiên!</p>
+        </field>
+    </record>
+</odoo>

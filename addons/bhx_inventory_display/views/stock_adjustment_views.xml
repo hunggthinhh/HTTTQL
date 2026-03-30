@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- FORM -->
+    <record id="view_stock_adjustment_form" model="ir.ui.view">
+        <field name="name">bhx.stock.adjustment.form</field>
+        <field name="model">bhx.stock.adjustment</field>
+        <field name="arch" type="xml">
+            <form string="Phiếu điều chỉnh tồn kho">
+                <header>
+                    <button name="action_confirm" string="Gửi duyệt"
+                            type="object" class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_approve" string="Phê duyệt"
+                            type="object" class="btn-success"
+                            invisible="state != 'confirm'"
+                            groups="bhx_inventory_display.group_inventory_manager"/>
+                    <button name="action_done" string="Hoàn thành"
+                            type="object" class="btn-primary" invisible="state != 'approved'"/>
+                    <button name="action_cancel" string="Huỷ"
+                            type="object" class="btn-danger"
+                            invisible="state in ('done','cancel')"/>
+                    <button name="action_draft" string="Đặt lại nháp"
+                            type="object" invisible="state != 'cancel'"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,confirm,approved,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="Thông tin phiếu">
+                            <field name="date"/>
+                            <field name="adjustment_type"/>
+                            <field name="reason"/>
+                            <field name="warehouse_id"/>
+                        </group>
+                        <group string="Người thực hiện">
+                            <field name="responsible_id"/>
+                            <field name="approved_id" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Chi tiết điều chỉnh" name="lines">
+                            <field name="line_ids">
+                                <tree editable="bottom">
+                                    <field name="product_id"/>
+                                    <field name="product_uom_id"/>
+                                    <field name="lot_id"/>
+                                    <field name="qty_before"/>
+                                    <field name="qty_change"/>
+                                    <field name="qty_after"/>
+                                    <field name="note" optional="hide"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Ghi chú" name="notes">
+                            <field name="note"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- TREE -->
+    <record id="view_stock_adjustment_tree" model="ir.ui.view">
+        <field name="name">bhx.stock.adjustment.tree</field>
+        <field name="model">bhx.stock.adjustment</field>
+        <field name="arch" type="xml">
+            <tree string="Điều chỉnh tồn kho"
+                  decoration-success="state == 'done'"
+                  decoration-warning="state == 'confirm'"
+                  decoration-muted="state == 'cancel'">
+                <field name="name"/>
+                <field name="date"/>
+                <field name="adjustment_type"/>
+                <field name="reason"/>
+                <field name="warehouse_id"/>
+                <field name="responsible_id"/>
+                <field name="approved_id"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'draft'"
+                       decoration-warning="state == 'confirm'"
+                       decoration-primary="state == 'approved'"
+                       decoration-success="state == 'done'"
+                       decoration-danger="state == 'cancel'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- SEARCH -->
+    <record id="view_stock_adjustment_search" model="ir.ui.view">
+        <field name="name">bhx.stock.adjustment.search</field>
+        <field name="model">bhx.stock.adjustment</field>
+        <field name="arch" type="xml">
+            <search string="Tìm phiếu điều chỉnh">
+                <field name="name"/>
+                <field name="warehouse_id"/>
+                <filter string="Chờ duyệt" name="confirm" domain="[('state','=','confirm')]"/>
+                <filter string="Đã duyệt" name="approved" domain="[('state','=','approved')]"/>
+                <filter string="Hoàn thành" name="done" domain="[('state','=','done')]"/>
+                <group expand="0" string="Nhóm theo">
+                    <filter string="Loại điều chỉnh" name="group_type" context="{'group_by':'adjustment_type'}"/>
+                    <filter string="Tháng" name="group_month" context="{'group_by':'date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ACTION -->
+    <record id="action_stock_adjustment" model="ir.actions.act_window">
+        <field name="name">Điều chỉnh tồn kho</field>
+        <field name="res_model">bhx.stock.adjustment</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_stock_adjustment_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Tạo phiếu điều chỉnh tồn kho đầu tiên!</p>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_bhx_sales_root" name="Bán Hàng"
+              sequence="40"
+              web_icon="bhx_sales,static/description/icon.png"
+              groups="bhx_sales.group_sales_user"/>
+
+    <!-- Ca bán hàng -->
+    <menuitem id="menu_bhx_shift_main" name="Ca Bán Hàng"
+              parent="menu_bhx_sales_root" sequence="1"
+              groups="bhx_sales.group_sales_user"/>
+    <menuitem id="menu_bhx_sales_shift" name="Quản lý ca"
+              parent="menu_bhx_shift_main"
+              action="action_sales_shift" sequence="10"/>
+
+    <!-- Đơn hàng -->
+    <menuitem id="menu_bhx_order_main" name="Đơn Hàng"
+              parent="menu_bhx_sales_root" sequence="2"
+              groups="bhx_sales.group_sales_user"/>
+    <menuitem id="menu_bhx_sales_order" name="Danh sách đơn hàng"
+              parent="menu_bhx_order_main"
+              action="action_sales_order" sequence="10"/>
+
+    <!-- Khuyến mãi -->
+    <menuitem id="menu_bhx_promo_main" name="Khuyến Mãi"
+              parent="menu_bhx_sales_root" sequence="3"
+              groups="bhx_sales.group_sales_manager"/>
+    <menuitem id="menu_bhx_promotion" name="Chương trình KM"
+              parent="menu_bhx_promo_main"
+              action="action_promotion" sequence="10"/>
+</odoo>

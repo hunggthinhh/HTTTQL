@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="seq_stock_adjustment" model="ir.sequence">
+            <field name="name">Phiếu điều chỉnh tồn kho</field>
+            <field name="code">bhx.stock.adjustment</field>
+            <field name="prefix">ADJ/%(year)s/%(month)s/</field>
+            <field name="padding">4</field>
+        </record>
+
+        <record id="seq_bhx_replenishment" model="ir.sequence">
+            <field name="name">Đợt châm hàng</field>
+            <field name="code">bhx.replenishment</field>
+            <field name="prefix">REP/%(year)s/%(month)s/</field>
+            <field name="padding">4</field>
+        </record>
+    </data>
+</odoo>

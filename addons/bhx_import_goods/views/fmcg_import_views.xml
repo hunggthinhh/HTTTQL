@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ═══════ FORM VIEW ═══════ -->
+    <record id="view_fmcg_import_form" model="ir.ui.view">
+        <field name="name">bhx.fmcg.import.form</field>
+        <field name="model">bhx.fmcg.import</field>
+        <field name="arch" type="xml">
+            <form string="Kiểm hàng nhập kho FMCG">
+                <header>
+                    <button name="action_start_checking" string="Bắt đầu kiểm hàng"
+                            type="object" class="btn-primary"
+                            invisible="state != 'draft'"/>
+                    <button name="action_confirm_done" string="Xác nhận hoàn thành"
+                            type="object" class="btn-primary"
+                            invisible="state != 'checking'"/>
+                    <button name="action_cancel" string="Huỷ phiếu"
+                            type="object" class="btn-danger"
+                            invisible="state in ('done', 'cancel')"/>
+                    <button name="action_draft" string="Đặt lại nháp"
+                            type="object"
+                            invisible="state not in ('cancel',)"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,checking,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="Thông tin chung">
+                            <field name="date"/>
+                            <field name="supplier_id"/>
+                            <field name="warehouse_id"/>
+                            <field name="responsible_id"/>
+                        </group>
+                        <group string="Thông tin vận chuyển">
+                            <field name="delivery_note"/>
+                            <field name="vehicle_plate"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="company_id" invisible="1"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Chi tiết sản phẩm FMCG" name="lines">
+                            <field name="line_ids" widget="one2many_list">
+                                <tree editable="bottom">
+                                    <field name="product_id"/>
+                                    <field name="barcode" optional="hide"/>
+                                    <field name="lot_no"/>
+                                    <field name="expiry_date"/>
+                                    <field name="quantity"/>
+                                    <field name="checked_qty"/>
+                                    <field name="damaged_qty"/>
+                                    <field name="product_uom_id" optional="hide"/>
+                                    <field name="unit_price"/>
+                                    <field name="subtotal"/>
+                                    <field name="remark" optional="hide"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Ghi chú" name="notes">
+                            <field name="note" placeholder="Ghi chú thêm..."/>
+                        </page>
+                    </notebook>
+
+                    <group>
+                        <group/>
+                        <group class="oe_subtotal_footer">
+                            <field name="total_qty" string="Tổng SL nhận"/>
+                            <field name="total_value" string="Tổng giá trị" widget="monetary"/>
+                        </group>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- ═══════ TREE VIEW ═══════ -->
+    <record id="view_fmcg_import_tree" model="ir.ui.view">
+        <field name="name">bhx.fmcg.import.tree</field>
+        <field name="model">bhx.fmcg.import</field>
+        <field name="arch" type="xml">
+            <tree string="Phiếu nhập FMCG" decoration-success="state == 'done'"
+                  decoration-warning="state == 'checking'"
+                  decoration-muted="state == 'cancel'">
+                <field name="name"/>
+                <field name="date"/>
+                <field name="supplier_id"/>
+                <field name="warehouse_id"/>
+                <field name="responsible_id"/>
+                <field name="delivery_note"/>
+                <field name="total_qty"/>
+                <field name="total_value" widget="monetary"/>
+                <field name="currency_id" invisible="1"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'done'"
+                       decoration-warning="state == 'checking'"
+                       decoration-danger="state == 'cancel'"
+                       decoration-info="state == 'draft'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- ═══════ SEARCH VIEW ═══════ -->
+    <record id="view_fmcg_import_search" model="ir.ui.view">
+        <field name="name">bhx.fmcg.import.search</field>
+        <field name="model">bhx.fmcg.import</field>
+        <field name="arch" type="xml">
+            <search string="Tìm phiếu nhập FMCG">
+                <field name="name" string="Mã phiếu"/>
+                <field name="supplier_id" string="Nhà cung cấp"/>
+                <field name="warehouse_id" string="Kho"/>
+                <field name="responsible_id" string="Người phụ trách"/>
+                <filter string="Nháp" name="draft" domain="[('state','=','draft')]"/>
+                <filter string="Đang kiểm" name="checking" domain="[('state','=','checking')]"/>
+                <filter string="Hoàn thành" name="done" domain="[('state','=','done')]"/>
+                <filter string="Đã huỷ" name="cancel" domain="[('state','=','cancel')]"/>
+                <separator/>
+                <filter string="Hôm nay" name="today"
+                        domain="[('date','=', context_today().strftime('%Y-%m-%d'))]"/>
+                <filter string="Tháng này" name="this_month"
+                        domain="[('date','&gt;=', context_today().strftime('%Y-%m-01'))]"/>
+                <group expand="0" string="Nhóm theo">
+                    <filter string="Nhà cung cấp" name="group_supplier" context="{'group_by':'supplier_id'}"/>
+                    <filter string="Kho" name="group_warehouse" context="{'group_by':'warehouse_id'}"/>
+                    <filter string="Tháng" name="group_month" context="{'group_by':'date:month'}"/>
+                    <filter string="Trạng thái" name="group_state" context="{'group_by':'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ═══════ ACTION ═══════ -->
+    <record id="action_fmcg_import" model="ir.actions.act_window">
+        <field name="name">Kiểm hàng nhập kho FMCG</field>
+        <field name="res_model">bhx.fmcg.import</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_fmcg_import_search"/>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Tạo phiếu kiểm hàng FMCG đầu tiên!
+            </p>
+            <p>
+                Quản lý việc nhận và kiểm tra hàng FMCG nhập kho.
+            </p>
+        </field>
+    </record>
+
+</odoo>

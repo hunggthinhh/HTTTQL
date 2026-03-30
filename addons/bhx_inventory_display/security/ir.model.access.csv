@@ -1,0 +1,17 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_display_location_user,bhx.display.location user,model_bhx_display_location,bhx_inventory_display.group_inventory_user,1,1,1,0
+access_display_location_manager,bhx.display.location manager,model_bhx_display_location,bhx_inventory_display.group_inventory_manager,1,1,1,1
+access_display_location_line_user,bhx.display.location.line user,model_bhx_display_location_line,bhx_inventory_display.group_inventory_user,1,1,1,0
+access_display_location_line_manager,bhx.display.location.line manager,model_bhx_display_location_line,bhx_inventory_display.group_inventory_manager,1,1,1,1
+access_stock_alert_user,bhx.stock.alert user,model_bhx_stock_alert,bhx_inventory_display.group_inventory_user,1,1,1,0
+access_stock_alert_manager,bhx.stock.alert manager,model_bhx_stock_alert,bhx_inventory_display.group_inventory_manager,1,1,1,1
+access_stock_adjustment_user,bhx.stock.adjustment user,model_bhx_stock_adjustment,bhx_inventory_display.group_inventory_user,1,1,0,0
+access_stock_adjustment_manager,bhx.stock.adjustment manager,model_bhx_stock_adjustment,bhx_inventory_display.group_inventory_manager,1,1,1,1
+access_stock_adjustment_line_user,bhx.stock.adjustment.line user,model_bhx_stock_adjustment_line,bhx_inventory_display.group_inventory_user,1,1,0,0
+access_stock_adjustment_line_manager,bhx.stock.adjustment.line manager,model_bhx_stock_adjustment_line,bhx_inventory_display.group_inventory_manager,1,1,1,1
+access_replenishment_user,bhx.replenishment user,model_bhx_replenishment,bhx_inventory_display.group_inventory_user,1,1,1,1
+access_replenishment_manager,bhx.replenishment manager,model_bhx_replenishment,bhx_inventory_display.group_inventory_manager,1,1,1,1
+access_replenishment_line_user,bhx.replenishment.line user,model_bhx_replenishment_line,bhx_inventory_display.group_inventory_user,1,1,1,1
+access_replenishment_line_manager,bhx.replenishment.line manager,model_bhx_replenishment_line,bhx_inventory_display.group_inventory_manager,1,1,1,1
+access_bhx_inventory_dashboard_user,bhx.inventory.dashboard user,model_bhx_inventory_dashboard,bhx_inventory_display.group_inventory_user,1,1,1,1
+

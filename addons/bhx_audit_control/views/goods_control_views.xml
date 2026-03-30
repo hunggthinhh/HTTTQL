@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- FORM -->
+    <record id="view_goods_control_form" model="ir.ui.view">
+        <field name="name">bhx.goods.control.form</field>
+        <field name="model">bhx.goods.control</field>
+        <field name="arch" type="xml">
+            <form string="Kiểm soát hàng hoá">
+                <header>
+                    <button name="action_done" string="Hoàn thành" type="object" class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_cancel" string="Huỷ" type="object" invisible="state != 'draft'"/>
+                    <button name="action_draft" string="Đặt lại" type="object" invisible="state != 'cancel'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" icon="fa-exclamation-triangle" type="object" name="action_done">
+                            <div class="o_stat_info">
+                                <span class="o_stat_value"><field name="total_issue"/></span>
+                                <span class="o_stat_text">Vấn đề</span>
+                            </div>
+                        </button>
+                    </div>
+                    <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="check_date"/>
+                            <field name="check_type"/>
+                            <field name="warehouse_id"/>
+                            <field name="responsible_id"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Danh sách kiểm soát" name="lines">
+                            <field name="line_ids">
+                                <tree editable="bottom"
+                                      decoration-danger="has_issue == True"
+                                      decoration-success="has_issue == False">
+                                    <field name="product_id"/>
+                                    <field name="lot_id" optional="show"/>
+                                    <field name="expiry_date" optional="show"/>
+                                    <field name="days_to_expiry" optional="show"/>
+                                    <field name="qty_on_display"/>
+                                    <field name="package_ok"/>
+                                    <field name="price_tag_ok"/>
+                                    <field name="placement_ok"/>
+                                    <field name="freshness_ok"/>
+                                    <field name="issue_type"/>
+                                    <field name="action_taken" optional="show"/>
+                                    <field name="has_issue" readonly="1"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Ghi chú" name="notes">
+                            <field name="note"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- TREE -->
+    <record id="view_goods_control_tree" model="ir.ui.view">
+        <field name="name">bhx.goods.control.tree</field>
+        <field name="model">bhx.goods.control</field>
+        <field name="arch" type="xml">
+            <tree decoration-success="state == 'done'" decoration-muted="state == 'cancel'">
+                <field name="name"/>
+                <field name="check_date"/>
+                <field name="check_type"/>
+                <field name="warehouse_id"/>
+                <field name="responsible_id"/>
+                <field name="total_checked"/>
+                <field name="total_issue"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'draft'"
+                       decoration-success="state == 'done'"
+                       decoration-danger="state == 'cancel'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- SEARCH -->
+    <record id="view_goods_control_search" model="ir.ui.view">
+        <field name="name">bhx.goods.control.search</field>
+        <field name="model">bhx.goods.control</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="warehouse_id"/>
+                <filter string="Hôm nay" name="today" domain="[('check_date','=',context_today().strftime('%Y-%m-%d'))]"/>
+                <filter string="Có vấn đề" name="has_issue" domain="[('total_issue','>',0)]"/>
+                <group expand="0" string="Nhóm theo">
+                    <filter string="Ca kiểm" name="group_type" context="{'group_by':'check_type'}"/>
+                    <filter string="Cửa hàng" name="group_wh" context="{'group_by':'warehouse_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ACTION -->
+    <record id="action_goods_control" model="ir.actions.act_window">
+        <field name="name">Kiểm soát hàng ngày</field>
+        <field name="res_model">bhx.goods.control</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Tạo phiếu kiểm soát hàng hoá hàng ngày!</p>
+        </field>
+    </record>
+</odoo>

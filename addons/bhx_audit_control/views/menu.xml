@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_bhx_audit_root" name="Kiểm Kê &amp; Kiểm Soát"
+              sequence="30"
+              web_icon="bhx_audit_control,static/description/icon.png"
+              groups="bhx_audit_control.group_audit_user"/>
+
+    <!-- Kiểm kê -->
+    <menuitem id="menu_bhx_audit_count" name="Kiểm Kê"
+              parent="menu_bhx_audit_root" sequence="1"
+              groups="bhx_audit_control.group_audit_user"/>
+    <menuitem id="menu_bhx_inventory_count" name="Phiếu kiểm kê"
+              parent="menu_bhx_audit_count"
+              action="action_inventory_count" sequence="10"/>
+
+    <!-- Kiểm soát hàng ngày -->
+    <menuitem id="menu_bhx_goods_ctrl" name="Kiểm Soát Hàng Ngày"
+              parent="menu_bhx_audit_root" sequence="2"
+              groups="bhx_audit_control.group_audit_user"/>
+    <menuitem id="menu_bhx_goods_control" name="Kiểm soát hàng hoá"
+              parent="menu_bhx_goods_ctrl"
+              action="action_goods_control" sequence="10"/>
+
+    <!-- Xử lý hàng -->
+    <menuitem id="menu_bhx_disposal_main" name="Xử Lý Hàng"
+              parent="menu_bhx_audit_root" sequence="3"
+              groups="bhx_audit_control.group_audit_manager"/>
+    <menuitem id="menu_bhx_disposal" name="Phiếu huỷ hàng"
+              parent="menu_bhx_disposal_main"
+              action="action_disposal" sequence="10"/>
+</odoo>

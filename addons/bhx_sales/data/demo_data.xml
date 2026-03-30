@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Sample Promotion -->
+        <record id="promo_grand_opening" model="bhx.promotion">
+            <field name="name">Khai trương hồng phát - Giảm 10%</field>
+            <field name="code">BHX10</field>
+            <field name="promo_type">discount_pct</field>
+            <field name="discount_pct">10.0</field>
+            <field name="date_from" eval="time.strftime('%Y-%m-01')"/>
+            <field name="date_to" eval="time.strftime('%Y-%m-28')"/>
+            <field name="applies_all">True</field>
+        </record>
+
+        <!-- Sample Sales Shift -->
+        <record id="shift_morning_today" model="bhx.sales.shift">
+            <field name="date" eval="time.strftime('%Y-%m-%d')"/>
+            <field name="shift_type">morning</field>
+            <field name="warehouse_id" ref="bhx_import_goods.bhx_warehouse"/>
+            <field name="cashier_id" ref="base.user_admin"/>
+            <field name="opening_cash">2000000</field>
+            <field name="state">open</field>
+        </record>
+    </data>
+</odoo>

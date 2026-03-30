@@ -1,0 +1,13 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_inventory_count_user,bhx.inventory.count user,model_bhx_inventory_count,bhx_audit_control.group_audit_user,1,1,1,0
+access_inventory_count_manager,bhx.inventory.count manager,model_bhx_inventory_count,bhx_audit_control.group_audit_manager,1,1,1,1
+access_inventory_count_line_user,bhx.inventory.count.line user,model_bhx_inventory_count_line,bhx_audit_control.group_audit_user,1,1,1,0
+access_inventory_count_line_manager,bhx.inventory.count.line manager,model_bhx_inventory_count_line,bhx_audit_control.group_audit_manager,1,1,1,1
+access_goods_control_user,bhx.goods.control user,model_bhx_goods_control,bhx_audit_control.group_audit_user,1,1,1,0
+access_goods_control_manager,bhx.goods.control manager,model_bhx_goods_control,bhx_audit_control.group_audit_manager,1,1,1,1
+access_goods_control_line_user,bhx.goods.control.line user,model_bhx_goods_control_line,bhx_audit_control.group_audit_user,1,1,1,0
+access_goods_control_line_manager,bhx.goods.control.line manager,model_bhx_goods_control_line,bhx_audit_control.group_audit_manager,1,1,1,1
+access_disposal_user,bhx.disposal user,model_bhx_disposal,bhx_audit_control.group_audit_user,1,1,1,0
+access_disposal_manager,bhx.disposal manager,model_bhx_disposal,bhx_audit_control.group_audit_manager,1,1,1,1
+access_disposal_line_user,bhx.disposal.line user,model_bhx_disposal_line,bhx_audit_control.group_audit_user,1,1,1,0
+access_disposal_line_manager,bhx.disposal.line manager,model_bhx_disposal_line,bhx_audit_control.group_audit_manager,1,1,1,1

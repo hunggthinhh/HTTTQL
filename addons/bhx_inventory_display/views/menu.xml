@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_bhx_inventory_root" name="Tồn Kho &amp; Trưng Bày"
+              sequence="20"
+              web_icon="bhx_inventory_display,static/description/icon.png"
+              groups="bhx_inventory_display.group_inventory_user"/>
+    
+    <menuitem id="menu_bhx_inventory_dashboard" name="Tổng Quan"
+              parent="menu_bhx_inventory_root"
+              action="action_bhx_inventory_dashboard" sequence="0"
+              groups="bhx_inventory_display.group_inventory_user"/>
+
+    <!-- Trưng bày -->
+    <menuitem id="menu_bhx_display_main" name="Trưng Bày"
+              parent="menu_bhx_inventory_root" sequence="1"
+              groups="bhx_inventory_display.group_inventory_user"/>
+    <menuitem id="menu_bhx_display_location" name="Vị trí trưng bày"
+              parent="menu_bhx_display_main"
+              action="action_display_location" sequence="10"
+              groups="bhx_inventory_display.group_inventory_user"/>
+
+    <!-- Tồn kho -->
+    <menuitem id="menu_bhx_inventory_main" name="Tồn Kho"
+              parent="menu_bhx_inventory_root" sequence="2"
+              groups="bhx_inventory_display.group_inventory_user"/>
+    <menuitem id="menu_bhx_stock_alert" name="Cảnh báo tồn kho"
+              parent="menu_bhx_inventory_main"
+              action="action_stock_alert" sequence="10"
+              groups="bhx_inventory_display.group_inventory_user"/>
+
+    <menuitem id="menu_bhx_replenishment" name="Đợt châm hàng"
+              parent="menu_bhx_inventory_main"
+              action="action_bhx_replenishment" sequence="20"
+              groups="bhx_inventory_display.group_inventory_user"/>
+
+    <!-- Tồn Kho Dự Trữ (stock.quant) -->
+    <record id="view_bhx_stock_quant_tree" model="ir.ui.view">
+        <field name="name">bhx.stock.quant.tree</field>
+        <field name="model">stock.quant</field>
+        <field name="arch" type="xml">
+            <tree string="Tồn kho dự trữ" create="false" edit="false" delete="false">
+                <field name="product_id"/>
+                <field name="location_id" string="Vị trí/Kho"/>
+                <field name="lot_id" optional="show"/>
+                <field name="quantity" string="Số lượng tồn"/>
+                <field name="reserved_quantity" optional="show" string="Đã giữ chỗ"/>
+                <field name="product_uom_id" string="ĐVT"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_bhx_stock_quant_search" model="ir.ui.view">
+        <field name="name">bhx.stock.quant.search</field>
+        <field name="model">stock.quant</field>
+        <field name="arch" type="xml">
+            <search string="Tìm kiếm Tồn kho">
+                <field name="product_id"/>
+                <field name="location_id"/>
+                <field name="lot_id"/>
+                <group expand="0" string="Nhóm theo">
+                    <filter string="Sản phẩm" name="group_product" context="{'group_by':'product_id'}"/>
+                    <filter string="Vị trí/Kho" name="group_location" context="{'group_by':'location_id'}"/>
+                </group>
+                <searchpanel>
+                    <field name="location_id" string="Kho Hàng / Vị Trí" enable_counters="1"/>
+                </searchpanel>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_bhx_warehouse_stock" model="ir.actions.act_window">
+        <field name="name">Tồn kho dự trữ</field>
+        <field name="res_model">stock.quant</field>
+        <field name="view_mode">tree</field>
+        <field name="domain">[('location_id.usage', '=', 'internal')]</field>
+        <field name="context">{'search_default_group_location': 1}</field>
+        <field name="search_view_id" ref="view_bhx_stock_quant_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Kho dự trữ hiện đang trống!
+            </p>
+            <p>
+                Tồn kho sẽ tự động cập nhật khi bạn có phiếu Nhập Hàng hoàn thành.
+            </p>
+        </field>
+    </record>
+
+    <menuitem id="menu_bhx_warehouse_stock"
+              name="Tồn kho dự trữ"
+              parent="menu_bhx_inventory_main"
+              action="action_bhx_warehouse_stock"
+              sequence="25"
+              groups="bhx_inventory_display.group_inventory_user"/>
+
+    <menuitem id="menu_bhx_stock_adjustment" name="Điều chỉnh tồn kho"
+              parent="menu_bhx_inventory_main"
+              action="action_stock_adjustment" sequence="20"
+              groups="bhx_inventory_display.group_inventory_manager"/>
+
+</odoo>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="module_category_audit_control" model="ir.module.category">
+            <field name="name">BHX Kiểm Kê &amp; Kiểm Soát</field>
+            <field name="sequence">22</field>
+        </record>
+        <record id="group_audit_user" model="res.groups">
+            <field name="name">Nhân viên kiểm kê</field>
+            <field name="category_id" ref="module_category_audit_control"/>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+        <record id="group_audit_manager" model="res.groups">
+            <field name="name">Quản lý kiểm kê</field>
+            <field name="category_id" ref="module_category_audit_control"/>
+            <field name="implied_ids" eval="[(4, ref('group_audit_user'))]"/>
+            <field name="users" eval="[(4, ref('base.user_admin'))]"/>
+        </record>
+    </data>
+</odoo>

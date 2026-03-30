@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Sample Suppliers -->
+        <record id="bhx_supplier_1" model="res.partner">
+            <field name="name">Kho Trung Tâm</field>
+            <field name="is_company">True</field>
+            <field name="supplier_rank">1</field>
+        </record>
+
+        <record id="bhx_supplier_2" model="res.partner1">
+            <field name="name">Hợp tác xã Rau sạch Đà Lạt</field>
+            <field name="is_company">True</field>
+            <field name="supplier_rank">1</field>
+        </record>
+
+        <!-- Product Categories -->
+        <record id="category_fmcg" model="product.category">
+            <field name="name">BHX FMCG</field>
+            <field name="parent_id" ref="product.product_category_all"/>
+        </record>
+
+        <record id="category_fresh" model="product.category">
+            <field name="name">BHX Hàng Fresh</field>
+            <field name="parent_id" ref="product.product_category_all"/>
+        </record>
+
+        <record id="category_fruit_veg" model="product.category">
+            <field name="name">BHX Rau củ quả</field>
+            <field name="parent_id" ref="product.product_category_all"/>
+        </record>
+
+        <!-- FMCG Products -->
+        <record id="product_mi_tom" model="product.product">
+            <field name="name">Mì tôm Hảo Hảo Tôm chua cay</field>
+            <field name="categ_id" ref="category_fmcg"/>
+            <field name="type">product</field>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="uom_po_id" ref="uom.product_uom_unit"/>
+            <field name="list_price">3500</field>
+            <field name="standard_price">2800</field>
+            <field name="barcode">BHXF001</field>
+        </record>
+
+        <record id="product_coca" model="product.product">
+            <field name="name">Coca-Cola chai 390ml</field>
+            <field name="categ_id" ref="category_fmcg"/>
+            <field name="type">product</field>
+            <field name="uom_id" ref="uom.product_uom_unit"/>
+            <field name="uom_po_id" ref="uom.product_uom_unit"/>
+            <field name="list_price">10000</field>
+            <field name="standard_price">8500</field>
+            <field name="barcode">BHXF002</field>
+        </record>
+
+        <!-- Fresh Products -->
+        <record id="product_thit_heo" model="product.product">
+            <field name="name">Thịt heo nạc dăm CP (kg)</field>
+            <field name="categ_id" ref="category_fresh"/>
+            <field name="type">product</field>
+            <field name="uom_id" ref="uom.product_uom_kgm"/>
+            <field name="uom_po_id" ref="uom.product_uom_kgm"/>
+            <field name="list_price">145000</field>
+            <field name="standard_price">110000</field>
+            <field name="barcode">BHXS001</field>
+        </record>
+
+        <record id="product_ca_dieu_hong" model="product.product">
+            <field name="name">Cá diêu hồng làm sạch (kg)</field>
+            <field name="categ_id" ref="category_fresh"/>
+            <field name="type">product</field>
+            <field name="uom_id" ref="uom.product_uom_kgm"/>
+            <field name="uom_po_id" ref="uom.product_uom_kgm"/>
+            <field name="list_price">65000</field>
+            <field name="standard_price">45000</field>
+            <field name="barcode">BHXS002</field>
+        </record>
+
+        <!-- Fruit & Veg Products -->
+        <record id="product_bap_cai" model="product.product">
+            <field name="name">Bắp cải trắng Đà Lạt (kg)</field>
+            <field name="categ_id" ref="category_fruit_veg"/>
+            <field name="type">product</field>
+            <field name="uom_id" ref="uom.product_uom_kgm"/>
+            <field name="uom_po_id" ref="uom.product_uom_kgm"/>
+            <field name="list_price">22000</field>
+            <field name="standard_price">12000</field>
+            <field name="barcode">BHXV001</field>
+        </record>
+
+        <record id="product_ca_rot" model="product.product">
+            <field name="name">Cà rốt Đà Lạt (kg)</field>
+            <field name="categ_id" ref="category_fruit_veg"/>
+            <field name="type">product</field>
+            <field name="uom_id" ref="uom.product_uom_kgm"/>
+            <field name="uom_po_id" ref="uom.product_uom_kgm"/>
+            <field name="list_price">25000</field>
+            <field name="standard_price">15000</field>
+            <field name="barcode">BHXV002</field>
+        </record>
+
+
+    </data>
+</odoo>

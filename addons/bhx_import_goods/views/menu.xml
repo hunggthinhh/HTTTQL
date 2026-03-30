@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════
+         ROOT MENU – Nhập Hàng
+    ══════════════════════════════════════════ -->
+    <menuitem
+        id="menu_bhx_import_root"
+        name="Nhập Hàng"
+        sequence="10"
+        web_icon="bhx_import_goods,static/description/icon.png"
+        groups="bhx_import_goods.group_import_user"/>
+
+    <!-- Sub-menu: Nhập hàng -->
+    <menuitem
+        id="menu_bhx_import_main"
+        name="Quản lý nhập hàng"
+        parent="menu_bhx_import_root"
+        sequence="1"
+        groups="bhx_import_goods.group_import_user"/>
+
+    <!-- ── FMCG ── -->
+    <menuitem
+        id="menu_bhx_fmcg_import"
+        name="Kiểm hàng nhập kho FMCG"
+        parent="menu_bhx_import_main"
+        action="action_fmcg_import"
+        sequence="10"
+        groups="bhx_import_goods.group_import_user"/>
+
+    <!-- ── Rau củ trái cây ── -->
+    <menuitem
+        id="menu_bhx_fruit_veg_import"
+        name="Nhập rau củ trái cây"
+        parent="menu_bhx_import_main"
+        action="action_fruit_veg_import"
+        sequence="20"
+        groups="bhx_import_goods.group_import_user"/>
+
+    <!-- ── Fresh ── -->
+    <menuitem
+        id="menu_bhx_fresh_import"
+        name="Nhập hàng Fresh"
+        parent="menu_bhx_import_main"
+        action="action_fresh_import"
+        sequence="30"
+        groups="bhx_import_goods.group_import_user"/>
+
+    <!-- Sub-menu: Báo cáo (dành cho quản lý) -->
+    <menuitem
+        id="menu_bhx_import_report"
+        name="Báo cáo nhập hàng"
+        parent="menu_bhx_import_root"
+        sequence="2"
+        groups="bhx_import_goods.group_import_manager"/>
+
+    <menuitem
+        id="menu_bhx_fmcg_report"
+        name="Thống kê FMCG"
+        parent="menu_bhx_import_report"
+        action="action_fmcg_import"
+        sequence="10"
+        groups="bhx_import_goods.group_import_manager"/>
+
+    <menuitem
+        id="menu_bhx_fruit_veg_report"
+        name="Thống kê Rau củ"
+        parent="menu_bhx_import_report"
+        action="action_fruit_veg_import"
+        sequence="20"
+        groups="bhx_import_goods.group_import_manager"/>
+
+    <menuitem
+        id="menu_bhx_fresh_report"
+        name="Thống kê Fresh"
+        parent="menu_bhx_import_report"
+        action="action_fresh_import"
+        sequence="30"
+        groups="bhx_import_goods.group_import_manager"/>
+
+</odoo>
