@@ -20,8 +20,17 @@
         'views/sales_shift_views.xml',
         'views/sales_order_views.xml',
         'views/promotion_views.xml',
+        'views/bhx_pos_templates.xml',
         'views/menu.xml',
+
     ],
+    'assets': {
+        'web.assets_frontend': [
+            'bhx_sales/static/src/css/pos_style.css',
+            'bhx_sales/static/src/js/pos_logic.js',
+        ],
+    },
+
     'installable': True,
     'application': True,
     'license': 'LGPL-3',

@@ -28,6 +28,11 @@
               action="action_stock_alert" sequence="10"
               groups="bhx_inventory_display.group_inventory_user"/>
 
+    <menuitem id="menu_bhx_audit_required_alert" name="Cảnh báo kiểm kê"
+              parent="menu_bhx_inventory_main"
+              action="action_audit_required_alert" sequence="15"
+              groups="bhx_inventory_display.group_inventory_user"/>
+
     <menuitem id="menu_bhx_replenishment" name="Đợt châm hàng"
               parent="menu_bhx_inventory_main"
               action="action_bhx_replenishment" sequence="20"

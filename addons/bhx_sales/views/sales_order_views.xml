@@ -7,8 +7,10 @@
         <field name="arch" type="xml">
             <form string="Đơn hàng bán lẻ">
                 <header>
+                    <button name="action_done_and_next" string="Xác nhận &amp; Bán tiếp" type="object" class="btn-success" invisible="state != 'draft'"/>
                     <button name="action_done" string="Xác nhận thanh toán" type="object" class="btn-primary" invisible="state != 'draft'"/>
                     <button name="action_cancel" string="Huỷ đơn" type="object" class="btn-danger" invisible="state in ('done','cancel','refund')"/>
+
                     <button name="action_refund" string="Hoàn hàng" type="object" invisible="state != 'done'"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,done"/>
                 </header>
@@ -17,8 +19,10 @@
                     <group>
                         <group string="Thông tin đơn hàng">
                             <field name="date_order"/>
-                            <field name="shift_id"/>
-                            <field name="cashier_id"/>
+                            <field name="shift_id" options="{'no_create': True}"/>
+                            <field name="warehouse_id" force_save="1"/>
+                            <field name="cashier_id" readonly="1"/>
+
                             <field name="payment_method"/>
                             <field name="promotion_id"/>
                         </group>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+    <odoo noupdate="1">
+        <!-- Cron Job for Inventory Audit Alerts -->
+        <record id="cron_generate_audit_alerts" model="ir.cron">
+            <field name="name">Cảnh báo: Tạo tự động cảnh báo Yêu cầu Kiểm kê</field>
+            <field name="model_id" ref="model_bhx_stock_alert"/>
+            <field name="state">code</field>
+            <field name="code">model.cron_generate_audit_alerts()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field name="active" eval="True"/>
+        </record>
+    
+</odoo>

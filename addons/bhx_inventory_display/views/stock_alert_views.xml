@@ -11,6 +11,12 @@
                             type="object" class="btn-primary" invisible="state in ('resolved', 'ignored')"/>
                     <button name="action_create_import_order" string="Tạo phiếu nhập hàng"
                             type="object" class="btn-info" invisible="state in ('resolved', 'ignored')"/>
+                    <button name="action_create_inventory_count" string="Tạo phiếu kiểm kê"
+                            type="object" class="btn-secondary" invisible="state in ('resolved', 'ignored')"/>
+                    <button name="action_create_goods_control" string="Tạo phiếu kiểm soát"
+                            type="object" class="btn-secondary" invisible="state in ('resolved', 'ignored')"/>
+                    <button name="action_create_disposal" string="Tạo phiếu huỷ hàng"
+                            type="object" class="btn-warning" invisible="state in ('resolved', 'ignored')"/>
                     <button name="action_processing" string="Bắt đầu xử lý"
                             type="object" class="btn-primary" invisible="state != 'new'"/>
                     <button name="action_resolved" string="Đã xử lý xong"
@@ -22,6 +28,17 @@
                     <field name="state" widget="statusbar" statusbar_visible="new,processing,resolved"/>
                 </header>
                 <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_inventory" type="object" class="oe_stat_button" icon="fa-list-alt" invisible="count_inventory == 0">
+                            <field name="count_inventory" widget="statinfo" string="Kiểm kê"/>
+                        </button>
+                        <button name="action_view_goods_control" type="object" class="oe_stat_button" icon="fa-check-square-o" invisible="count_goods_control == 0">
+                            <field name="count_goods_control" widget="statinfo" string="Kiểm soát"/>
+                        </button>
+                        <button name="action_view_disposal" type="object" class="oe_stat_button" icon="fa-trash" invisible="count_disposal == 0">
+                            <field name="count_disposal" widget="statinfo" string="Huỷ hàng"/>
+                        </button>
+                    </div>
                     <div class="oe_title">
                         <h1><field name="name"/></h1>
                     </div>
@@ -60,8 +77,8 @@
         <field name="model">bhx.stock.alert</field>
         <field name="arch" type="xml">
             <tree string="Cảnh báo tồn kho"
-                  decoration-danger="alert_type in ('out_of_stock','expired') or days_to_expiry &lt; 0"
-                  decoration-warning="alert_type in ('low_stock','near_expiry') or (days_to_expiry &gt;= 0 and days_to_expiry &lt;= 3)"
+                  decoration-danger="alert_type in ('out_of_stock','expired','audit_required') or days_to_expiry &lt; 0"
+                  decoration-warning="alert_type in ('low_stock','near_expiry','control_required') or (days_to_expiry &gt;= 0 and days_to_expiry &lt;= 3)"
                   decoration-muted="state in ('resolved','ignored')">
                 <field name="priority" widget="priority"/>
                 <field name="name"/>
@@ -87,6 +104,18 @@
                         type="object" icon="fa-plus-square" class="btn-primary"
                         invisible="state in ('resolved', 'ignored')"
                         help="Nhấn để tạo nhanh phiếu nhập hàng từ cảnh báo này"/>
+                <button name="action_create_inventory_count" string="Kiểm kê"
+                        type="object" icon="fa-list-alt" class="btn-secondary"
+                        invisible="state in ('resolved', 'ignored')"
+                        help="Tạo phiếu kiểm kê đột xuất"/>
+                <button name="action_create_goods_control" string="Kiểm soát"
+                        type="object" icon="fa-check-square-o" class="btn-secondary"
+                        invisible="state in ('resolved', 'ignored')"
+                        help="Tạo phiếu kiểm soát cửa hàng"/>
+                <button name="action_create_disposal" string="Huỷ hàng"
+                        type="object" icon="fa-trash" class="btn-warning"
+                        invisible="state in ('resolved', 'ignored')"
+                        help="Tạo phiếu huỷ hàng cho sản phẩm này"/>
 
             </tree>
         </field>
@@ -106,6 +135,8 @@
                 <filter string="Sắp hết hàng" name="low" domain="[('alert_type','=','low_stock')]"/>
                 <filter string="Sắp hết hạn" name="near_expiry" domain="[('alert_type','=','near_expiry')]"/>
                 <filter string="Đã hết hạn" name="expired" domain="[('alert_type','=','expired')]"/>
+                <filter string="Yêu cầu kiểm kê" name="audit_required" domain="[('alert_type','=','audit_required')]"/>
+                <filter string="Yêu cầu kiểm soát" name="control_required" domain="[('alert_type','=','control_required')]"/>
                 <separator/>
                 <filter string="Khẩn cấp" name="urgent" domain="[('priority','=','3')]"/>
                 <group expand="0" string="Nhóm theo">
@@ -126,6 +157,18 @@
         <field name="context">{'search_default_new': 1, 'search_default_processing': 1}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">Không có cảnh báo tồn kho nào!</p>
+        </field>
+    </record>
+
+    <!-- ACTION CẢNH BÁO KIỂM KÊ -->
+    <record id="action_audit_required_alert" model="ir.actions.act_window">
+        <field name="name">Cảnh báo kiểm kê</field>
+        <field name="res_model">bhx.stock.alert</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('alert_type', 'in', ['audit_required', 'control_required'])]</field>
+        <field name="context">{'default_alert_type': 'audit_required', 'search_default_new': 1, 'search_default_processing': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Không có cảnh báo kiểm kê nào!</p>
         </field>
     </record>
 </odoo>

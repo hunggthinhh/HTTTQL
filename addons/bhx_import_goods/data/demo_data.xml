@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data noupdate="1">
+        <!-- Kho Cửa hàng Bách Hóa Xanh -->
+        <record id="bhx_warehouse" model="stock.warehouse">
+            <field name="name">Kho cửa hàng</field>
+            <field name="code">BHX</field>
+        </record>
+
         <!-- Sample Suppliers -->
         <record id="bhx_supplier_1" model="res.partner">
             <field name="name">Kho Trung Tâm</field>
@@ -8,7 +14,7 @@
             <field name="supplier_rank">1</field>
         </record>
 
-        <record id="bhx_supplier_2" model="res.partner1">
+        <record id="bhx_supplier_2" model="res.partner">
             <field name="name">Hợp tác xã Rau sạch Đà Lạt</field>
             <field name="is_company">True</field>
             <field name="supplier_rank">1</field>

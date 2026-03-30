@@ -11,12 +11,15 @@
         - Điều chỉnh tồn kho nội bộ
     """,
     'author': 'Thinh Phan',
-    'depends': ['base', 'stock', 'product', 'mail', 'bhx_import_goods'],
+    'depends': ['base', 'stock', 'product', 'mail', 'bhx_import_goods', 'bhx_audit_control'],
     'data': [
         'security/security.xml',
         'security/ir.model.access.csv',
         'data/sequence_data.xml',
+        'data/dashboard_data.xml',
         'data/demo_data.xml',
+        'data/cron_data.xml',
+        'views/dashboard_template.xml',
         'views/display_location_views.xml',
         'views/stock_alert_views.xml',
         'views/replenishment_views.xml',

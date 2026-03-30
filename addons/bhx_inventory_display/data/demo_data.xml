@@ -1,35 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<odoo>
-    <data noupdate="1">
-
-
-
-
-        <!-- Initial Shelf Stock -->
-        <record id="shelf_line_1" model="bhx.display.location.line">
-            <field name="location_id" ref="location_shelf_a1"/>
-            <field name="product_id" ref="bhx_import_goods.product_mi_tom"/>
-            <field name="min_qty">50</field>
-            <field name="max_qty">200</field>
-            <field name="current_qty">120</field>
-        </record>
-
-        <record id="shelf_line_2" model="bhx.display.location.line">
-            <field name="location_id" ref="location_shelf_a1"/>
-            <field name="product_id" ref="bhx_import_goods.product_coca"/>
-            <field name="min_qty">24</field>
-            <field name="max_qty">100</field>
-            <field name="current_qty">15</field> <!-- Trigger Low Stock -->
-        </record>
-
-        <record id="shelf_line_3" model="bhx.display.location.line">
-            <field name="location_id" ref="location_fridge_f1"/>
-            <field name="product_id" ref="bhx_import_goods.product_thit_heo"/>
-            <field name="min_qty">5</field>
-            <field name="max_qty">20</field>
-            <field name="current_qty">8</field>
-        </record>
-
+    <odoo noupdate="1">
         <!-- Sample Stock Alerts -->
         <record id="alert_low_coca" model="bhx.stock.alert">
             <field name="name">⚠️ SẮP HẾT: Coca-Cola chai 390ml - Kệ A1</field>
@@ -43,47 +13,32 @@
             <field name="state">new</field>
         </record>
 
-        <!-- MỚI: Các Thẻ Nghiệp Vụ Kanban cho Bách Hóa Xanh -->
-        <record id="bhx_dashboard_fmcg" model="bhx.inventory.dashboard">
-            <field name="name">Kiểm hàng FMCG</field>
-            <field name="code">fmcg</field>
-            <field name="sequence">10</field>
-            <field name="color">3</field>
-        </record>
-        
-        <record id="bhx_dashboard_fresh" model="bhx.inventory.dashboard">
-            <field name="name">Nhập hàng Tươi sống</field>
-            <field name="code">fresh</field>
-            <field name="sequence">20</field>
-            <field name="color">4</field>
-        </record>
-        
-        <record id="bhx_dashboard_fruit" model="bhx.inventory.dashboard">
-            <field name="name">Lệnh nhập Rau củ</field>
-            <field name="code">fruit</field>
-            <field name="sequence">30</field>
-            <field name="color">5</field>
-        </record>
-        
-        <record id="bhx_dashboard_replenish" model="bhx.inventory.dashboard">
-            <field name="name">Lệnh chuyển hàng lên kệ</field>
-            <field name="code">replenish</field>
-            <field name="sequence">40</field>
-            <field name="color">2</field>
-        </record>
-        
-        <record id="bhx_dashboard_alert" model="bhx.inventory.dashboard">
-            <field name="name">Cảnh báo Tồn / Date</field>
-            <field name="code">alert</field>
-            <field name="sequence">50</field>
-            <field name="color">1</field>
+        <!-- Sample Audit Required Alert -->
+        <record id="alert_audit_coca" model="bhx.stock.alert">
+            <field name="name">🚨 YÊU CẦU KIỂM KÊ: Có chênh lệch lớn</field>
+            <field name="alert_type">audit_required</field>
+            <field name="priority">3</field>
+            <field name="product_id" ref="bhx_import_goods.product_coca"/>
+            <field name="warehouse_id" ref="bhx_import_goods.bhx_warehouse"/>
+            <field name="current_qty">-5</field>
+            <field name="min_qty">24</field>
+            <field name="max_qty">100</field>
+            <field name="note">Hệ thống ghi nhận tồn kho âm, cần kiểm đếm thực tế khẩn cấp.</field>
+            <field name="state">new</field>
         </record>
 
-        <record id="bhx_dashboard_pos" model="bhx.inventory.dashboard">
-            <field name="name">Bán hàng POS</field>
-            <field name="code">pos</field>
-            <field name="sequence">60</field>
-            <field name="color">9</field>
+        <!-- Sample Control Required Alert -->
+        <record id="alert_control_coca" model="bhx.stock.alert">
+            <field name="name">🔎 YÊU CẦU KIỂM SOÁT: Hạn sử dụng</field>
+            <field name="alert_type">control_required</field>
+            <field name="priority">2</field>
+            <field name="product_id" ref="bhx_import_goods.product_coca" />
+            <field name="warehouse_id" ref="bhx_import_goods.bhx_warehouse"/>
+            <field name="current_qty">10</field>
+            <field name="min_qty">5</field>
+            <field name="max_qty">20</field>
+            <field name="note">Cần kiểm tra HSD của lô hàng trên kệ.</field>
+            <field name="state">new</field>
         </record>
-    </data>
+    
 </odoo>

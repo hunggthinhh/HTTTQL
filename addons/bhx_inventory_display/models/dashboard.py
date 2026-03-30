@@ -13,7 +13,10 @@ class InventoryDashboard(models.Model):
         ('fruit', 'Nhập Rau Củ Quả'),
         ('replenish', 'Đợt châm hàng'),
         ('alert', 'Cảnh báo Tồn/Date'),
-        ('pos', 'Bán hàng POS')
+        ('pos', 'Bán hàng POS'),
+        ('count', 'Kiểm kê'),
+        ('goods_ctrl', 'Kiểm soát hàng hóa'),
+        ('disposal', 'Xử lý hàng')
     ], string='Mã nghiệp vụ', required=True)
     color = fields.Integer(string='Color Index', default=0)
     
@@ -33,15 +36,21 @@ class InventoryDashboard(models.Model):
             elif rec.code == 'replenish':
                 rec.count_pending = self.env['bhx.replenishment'].search_count([('state', 'in', ['draft', 'in_progress'])])
             elif rec.code == 'alert':
-                # Đếm tất cả cảnh báo mới hoặc đang xử lý (Hết hạn, Sắp hết hạn, Sắp hết hàng, Hết hàng)
+                # Đếm tất cả cảnh báo mới hoặc đang xử lý (Hết hạn, Sắp hết hạn, Sắp hết hàng, Hết hàng, Yêu cầu kiểm kê, Yêu cầu kiểm soát)
                 count = self.env['bhx.stock.alert'].search_count([
                     ('state', 'in', ['new', 'processing']),
-                    ('alert_type', 'in', ['low_stock', 'out_of_stock', 'near_expiry', 'expired'])
+                    ('alert_type', 'in', ['low_stock', 'out_of_stock', 'near_expiry', 'expired', 'audit_required', 'control_required'])
                 ])
                 rec.count_pending = count
             elif rec.code == 'pos':
                 # Giả sử POS thì số đơn hàng hôm nay
                 rec.count_pending = self.env['bhx.sales.order'].search_count([('state', '=', 'draft')])
+            elif rec.code == 'count':
+                rec.count_pending = self.env['bhx.inventory.count'].search_count([('state', 'in', ['draft', 'in_progress', 'review'])])
+            elif rec.code == 'goods_ctrl':
+                rec.count_pending = self.env['bhx.goods.control'].search_count([('state', '=', 'draft')])
+            elif rec.code == 'disposal':
+                rec.count_pending = self.env['bhx.disposal'].search_count([('state', 'in', ['draft', 'confirm'])])
             else:
                 rec.count_pending = 0
 
@@ -62,10 +71,19 @@ class InventoryDashboard(models.Model):
             action['domain'] = [('state', 'in', ['draft', 'in_progress'])]
         elif self.code == 'alert':
             action = self.env.ref('bhx_inventory_display.action_stock_alert').read()[0]
-            action['domain'] = [('alert_type', 'in', ['near_expiry', 'expired'])]
+            action['domain'] = [('alert_type', 'in', ['near_expiry', 'expired', 'audit_required', 'control_required'])]
         elif self.code == 'pos':
             action = self.env.ref('bhx_sales.action_sales_order').read()[0]
             action['domain'] = [('state', '=', 'draft')]
+        elif self.code == 'count':
+            action = self.env.ref('bhx_audit_control.action_inventory_count').read()[0]
+            action['domain'] = [('state', 'in', ['draft', 'in_progress', 'review'])]
+        elif self.code == 'goods_ctrl':
+            action = self.env.ref('bhx_audit_control.action_goods_control').read()[0]
+            action['domain'] = [('state', '=', 'draft')]
+        elif self.code == 'disposal':
+            action = self.env.ref('bhx_audit_control.action_disposal').read()[0]
+            action['domain'] = [('state', 'in', ['draft', 'confirm'])]
         
         # Override name to show it's filtered
         if 'name' in action:

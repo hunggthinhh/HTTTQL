@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="external_dashboard_template" name="Bách Hóa Xanh External Dashboard">
+        <html>
+            <head>
+                <title>Dashboard Cảnh báo Kiểm kê &amp; Kiểm soát</title>
+                <!-- Include CSS bootstrap directly from Odoo base/web -->
+                <link rel="stylesheet" href="/web/static/lib/bootstrap/css/bootstrap.css"/>
+                <style>
+                    body {
+                        background-color: #f4f6f9;
+                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                    }
+                    .header {
+                        background-color: #ffb700;
+                        color: #111;
+                        padding: 20px;
+                        text-align: center;
+                        margin-bottom: 30px;
+                        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                    }
+                    .card-header {
+                        background-color: #2e7d32;
+                        color: white;
+                        font-weight: bold;
+                    }
+                    .alert-badge {
+                        font-size: 1.2rem;
+                    }
+                    .product-name {
+                        font-weight: bold;
+                        color: #555;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h1>Màn hình Giám sát Tồn kho &amp; Kiểm kê Bách Hóa Xanh</h1>
+                    <p class="lead mb-0">Tổng số cảnh báo cần xử lý: <span class="badge bg-danger"> <t t-esc="total_alerts" /></span></p>
+                </div>
+
+                <div class="container">
+                    <t t-if="not dashboard_data">
+                        <div class="alert alert-success text-center">
+                            <h4><i class="fa fa-check-circle"></i> Tuyệt vời! Hiện tại không có cảnh báo nào!</h4>
+                        </div>
+                    </t>
+
+                    <div class="row">
+                        <t t-foreach="dashboard_data" t-as="data">
+                            <div class="col-md-6 mb-4">
+                                <div class="card shadow-sm">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <h4 class="mb-0"><t t-esc="data['warehouse_name']"/></h4>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-around mb-3">
+                                            <div class="text-center">
+                                                <h5>Yêu cầu kiểm kê</h5>
+                                                <span class="badge bg-danger alert-badge"><t t-esc="data['audit_count']"/></span>
+                                            </div>
+                                            <div class="text-center">
+                                                <h5>Yêu cầu kiểm soát</h5>
+                                                <span class="badge bg-warning text-dark alert-badge"><t t-esc="data['control_count']"/></span>
+                                            </div>
+                                        </div>
+                                        <hr/>
+                                        <div class="list-group">
+                                            <t t-foreach="data['alerts']" t-as="alert">
+                                                <div class="list-group-item list-group-item-action flex-column align-items-start">
+                                                    <div class="d-flex w-100 justify-content-between">
+                                                        <h5 class="mb-1"><t t-esc="alert.name"/></h5>
+                                                        <small t-attf-class="badge #{'bg-danger' if alert.priority == '3' else 'bg-warning text-dark'}">
+                                                            Prio: <t t-esc="alert.priority"/>
+                                                        </small>
+                                                    </div>
+                                                    <p class="mb-1 product-name"><t t-esc="alert.product_id.name"/></p>
+                                                    <small class="text-muted"><t t-esc="alert.note"/></small>
+                                                </div>
+                                            </t>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </t>
+                    </div>
+                </div>
+            </body>
+        </html>
+    </template>
+</odoo>

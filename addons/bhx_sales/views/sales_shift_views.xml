@@ -7,8 +7,10 @@
         <field name="arch" type="xml">
             <form string="Ca bán hàng">
                 <header>
+                    <button name="action_open_pos" string="Bán hàng POS" type="object" class="btn-success" invisible="state != 'open'"/>
                     <button name="action_close_shift" string="Đóng ca" type="object" class="btn-danger" invisible="state != 'open'"/>
                     <button name="action_reconcile" string="Đối soát doanh thu" type="object" class="btn-primary" invisible="state != 'closed'" groups="bhx_sales.group_sales_manager"/>
+
                     <field name="state" widget="statusbar" statusbar_visible="open,closed,reconciled"/>
                 </header>
                 <sheet>

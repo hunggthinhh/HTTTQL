@@ -71,3 +71,15 @@ class SalesShift(models.Model):
         if self.state != 'closed':
             raise UserError(_('Chỉ có thể đối soát ca đã đóng.'))
         self.write({'state': 'reconciled'})
+
+    def action_open_pos(self):
+        self.ensure_one()
+        if self.state != 'open':
+            raise UserError(_('Ca đã đóng, không thể bán hàng.'))
+        return {
+            'type': 'ir.actions.act_url',
+            'url': '/bhx/pos',
+            'target': 'self',
+        }
+
+

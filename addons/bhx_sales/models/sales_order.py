@@ -16,11 +16,18 @@ class SalesOrder(models.Model):
         string='Thời gian đặt hàng',
         default=fields.Datetime.now, tracking=True,
     )
-    shift_id = fields.Many2one('bhx.sales.shift', string='Ca bán hàng', tracking=True)
+    shift_id = fields.Many2one('bhx.sales.shift', string='Ca bán hàng', required=True, tracking=True)
     warehouse_id = fields.Many2one(
         'stock.warehouse', string='Cửa hàng', required=True,
-        related='shift_id.warehouse_id', store=True,
+        readonly=True, store=True,
     )
+
+    @api.onchange('shift_id')
+    def _onchange_shift_id(self):
+        if self.shift_id:
+            self.warehouse_id = self.shift_id.warehouse_id.id
+            self.date_order = fields.Datetime.now()
+
     cashier_id = fields.Many2one(
         'res.users', string='Thu ngân',
         default=lambda self: self.env.user,
@@ -86,6 +93,21 @@ class SalesOrder(models.Model):
                 display_line.current_qty -= line.qty
 
         self.write({'state': 'done'})
+
+    def action_done_and_next(self):
+        self.action_done()
+        return {
+            'name': _('Đơn hàng mới'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'bhx.sales.order',
+            'view_mode': 'form',
+            'context': {
+                'default_shift_id': self.shift_id.id,
+                'default_warehouse_id': self.warehouse_id.id,
+            },
+            'target': 'current',
+        }
+
 
     def action_cancel(self):
         if self.state == 'done':

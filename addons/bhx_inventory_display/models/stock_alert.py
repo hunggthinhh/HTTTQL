@@ -17,6 +17,8 @@ class StockAlert(models.Model):
         ('expired', 'Đã hết hạn'),
         ('overstock', 'Tồn kho quá nhiều'),
         ('temperature', 'Bất thường nhiệt độ'),
+        ('audit_required', 'Yêu cầu kiểm kê'),
+        ('control_required', 'Yêu cầu kiểm soát'),
     ], string='Loại cảnh báo', required=True, tracking=True)
     priority = fields.Selection([
         ('0', 'Thấp'),
@@ -50,6 +52,39 @@ class StockAlert(models.Model):
     company_id = fields.Many2one(
         'res.company', default=lambda self: self.env.company,
     )
+
+    inventory_count_ids = fields.One2many('bhx.inventory.count', 'alert_id', string='Phiếu kiểm kê')
+    goods_control_ids = fields.One2many('bhx.goods.control', 'alert_id', string='Phiếu kiểm soát')
+    disposal_ids = fields.One2many('bhx.disposal', 'alert_id', string='Phiếu huỷ hàng')
+
+    count_inventory = fields.Integer(compute='_compute_audit_counts', string='Số kiểm kê')
+    count_goods_control = fields.Integer(compute='_compute_audit_counts', string='Số kiểm soát')
+    count_disposal = fields.Integer(compute='_compute_audit_counts', string='Số xử lý')
+
+    @api.depends('inventory_count_ids', 'goods_control_ids', 'disposal_ids')
+    def _compute_audit_counts(self):
+        for rec in self:
+            rec.count_inventory = len(rec.inventory_count_ids)
+            rec.count_goods_control = len(rec.goods_control_ids)
+            rec.count_disposal = len(rec.disposal_ids)
+
+    def action_view_inventory(self):
+        action = self.env.ref('bhx_audit_control.action_inventory_count').read()[0]
+        action['domain'] = [('alert_id', '=', self.id)]
+        action['context'] = {'default_alert_id': self.id}
+        return action
+
+    def action_view_goods_control(self):
+        action = self.env.ref('bhx_audit_control.action_goods_control').read()[0]
+        action['domain'] = [('alert_id', '=', self.id)]
+        action['context'] = {'default_alert_id': self.id}
+        return action
+
+    def action_view_disposal(self):
+        action = self.env.ref('bhx_audit_control.action_disposal').read()[0]
+        action['domain'] = [('alert_id', '=', self.id)]
+        action['context'] = {'default_alert_id': self.id}
+        return action
 
     @api.depends('expiry_date')
     def _compute_days_to_expiry(self):
@@ -174,3 +209,131 @@ class StockAlert(models.Model):
             'res_id': new_import.id,
             'target': 'current',
         }
+
+    def action_create_inventory_count(self):
+        self.ensure_one()
+        if self.state == 'resolved':
+            raise UserError(_('Cảnh báo này đã được xử lý.'))
+            
+        count_vals = {
+            'alert_id': self.id,
+            'warehouse_id': self.warehouse_id.id,
+            'note': f'Tạo từ cảnh báo: {self.name}',
+            'count_type': 'spot',
+            'line_ids': [(0, 0, {
+                'product_id': self.product_id.id,
+                'lot_id': self.lot_id.id if self.lot_id else False,
+                'expiry_date': self.expiry_date,
+                'qty_system': self.current_qty,
+            })]
+        }
+        
+        new_count = self.env['bhx.inventory.count'].create(count_vals)
+        self.write({'state': 'processing', 'note': f'Đã tạo phiếu kiểm kê: {new_count.name}'})
+        
+        return {
+            'name': _('Phiếu kiểm kê'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'bhx.inventory.count',
+            'view_mode': 'form',
+            'res_id': new_count.id,
+            'target': 'current',
+        }
+
+    def action_create_goods_control(self):
+        self.ensure_one()
+        if self.state == 'resolved':
+            raise UserError(_('Cảnh báo này đã được xử lý.'))
+            
+        ctrl_vals = {
+            'alert_id': self.id,
+            'warehouse_id': self.warehouse_id.id,
+            'check_type': 'random',
+            'note': f'Tạo từ cảnh báo: {self.name}',
+            'line_ids': [(0, 0, {
+                'product_id': self.product_id.id,
+                'lot_id': self.lot_id.id if self.lot_id else False,
+                'expiry_date': self.expiry_date,
+                'qty_on_display': self.current_qty,
+            })]
+        }
+        new_ctrl = self.env['bhx.goods.control'].create(ctrl_vals)
+        self.write({'state': 'processing', 'note': f'Đã tạo phiếu kiểm soát: {new_ctrl.name}'})
+        
+        return {
+            'name': _('Phiếu kiểm soát'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'bhx.goods.control',
+            'view_mode': 'form',
+            'res_id': new_ctrl.id,
+            'target': 'current',
+        }
+
+    def action_create_disposal(self):
+        self.ensure_one()
+        if self.state == 'resolved':
+            raise UserError(_('Cảnh báo này đã được xử lý.'))
+            
+        reason = 'expire'
+        if self.alert_type == 'expired':
+            reason = 'expire'
+        else:
+            reason = 'other'
+            
+        disposal_vals = {
+            'alert_id': self.id,
+            'warehouse_id': self.warehouse_id.id,
+            'disposal_type': reason,
+            'note': f'Tạo từ cảnh báo: {self.name}',
+            'line_ids': [(0, 0, {
+                'product_id': self.product_id.id,
+                'lot_id': self.lot_id.id if self.lot_id else False,
+                'expiry_date': self.expiry_date,
+                'qty': self.current_qty,
+                'unit_cost': self.product_id.standard_price,
+            })]
+        }
+        
+        new_disposal = self.env['bhx.disposal'].create(disposal_vals)
+        self.write({'state': 'processing', 'note': f'Đã tạo phiếu huỷ hàng: {new_disposal.name}'})
+        
+        return {
+            'name': _('Phiếu xử lý/huỷ hàng'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'bhx.disposal',
+            'view_mode': 'form',
+            'res_id': new_disposal.id,
+            'target': 'current',
+        }
+
+    @api.model
+    def cron_generate_audit_alerts(self):
+        # Tự động tạo cảnh báo kiểm kê khi phát hiện tồn kho âm
+        locations = self.env['bhx.display.location.line'].search([
+            ('current_qty', '<', 0)
+        ])
+        for loc in locations:
+            existing_alert = self.search([
+                ('product_id', '=', loc.product_id.id),
+                ('warehouse_id', '=', loc.location_id.warehouse_id.id),
+                ('state', 'in', ['new', 'processing']),
+                ('alert_type', '=', 'audit_required')
+            ], limit=1)
+            
+            if not existing_alert:
+                try:
+                    store_wh = self.env.ref('bhx_import_goods.bhx_warehouse')
+                except Exception:
+                    store_wh = loc.location_id.warehouse_id
+                self.create({
+                    'name': f'🚨 YÊU CẦU KIỂM KÊ: {loc.product_id.name} (Tồn kho âm)',
+                    'alert_type': 'audit_required',
+                    'priority': '3',
+                    'product_id': loc.product_id.id,
+                    'warehouse_id': store_wh.id,
+                    'current_qty': loc.current_qty,
+                    'min_qty': loc.min_qty,
+                    'max_qty': loc.max_qty or (loc.min_qty * 2),
+                    'note': f'Hệ thống ghi nhận tồn kho vật lý bị âm ({loc.current_qty}) tại {loc.location_id.name}. Yêu cầu kiểm kê.',
+                    'responsible_id': self.env.ref('base.user_root').id,
+                })

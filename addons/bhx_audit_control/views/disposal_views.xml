@@ -15,9 +15,13 @@
                     <field name="state" widget="statusbar" statusbar_visible="draft,confirm,approved,done"/>
                 </header>
                 <sheet>
+                    <div class="oe_button_box" name="button_box">
+
+                    </div>
                     <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
                     <group>
                         <group string="Thông tin phiếu">
+
                             <field name="date"/>
                             <field name="disposal_type"/>
                             <field name="disposal_method"/>
