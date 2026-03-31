@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <menuitem id="menu_bhx_inventory_root" name="Tồn Kho &amp; Trưng Bày"
+    <menuitem id="menu_bhx_inventory_root" name="Tồn Kho"
               sequence="20"
               web_icon="bhx_inventory_display,static/description/icon.png"
               groups="bhx_inventory_display.group_inventory_user"/>

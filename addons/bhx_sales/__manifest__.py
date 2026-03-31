@@ -24,12 +24,12 @@
         'views/menu.xml',
 
     ],
-    'assets': {
-        'web.assets_frontend': [
-            'bhx_sales/static/src/css/pos_style.css',
-            'bhx_sales/static/src/js/pos_logic.js',
-        ],
-    },
+    # 'assets': {
+    #     'web.assets_frontend': [
+    #         'bhx_sales/static/src/css/pos_style.css',
+    #         'bhx_sales/static/src/js/pos_logic.js',
+    #     ],
+    # },
 
     'installable': True,
     'application': True,
