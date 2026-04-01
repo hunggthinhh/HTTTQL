@@ -24,6 +24,13 @@ services:
     volumes:
       - odoo_data:/var/lib/odoo
       - ./addons:/mnt/extra-addons
+# Deploy: Quick Tunnel (miễn phí, không cần domain)
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --url http://odoo:8069
+    depends_on:
+      - odoo
 
 volumes:
   db_data:

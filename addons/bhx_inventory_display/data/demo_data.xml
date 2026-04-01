@@ -2,7 +2,7 @@
     <odoo noupdate="1">
         <!-- Sample Stock Alerts -->
         <record id="alert_low_coca" model="bhx.stock.alert">
-            <field name="name">⚠️ SẮP HẾT: Coca-Cola chai 390ml - Kệ A1</field>
+            <field name="name">SẮP HẾT: Coca-Cola chai 390ml - Kệ A1</field>
             <field name="alert_type">low_stock</field>
             <field name="priority">2</field>
             <field name="product_id" ref="bhx_import_goods.product_coca"/>
@@ -15,7 +15,7 @@
 
         <!-- Sample Audit Required Alert -->
         <record id="alert_audit_coca" model="bhx.stock.alert">
-            <field name="name">🚨 YÊU CẦU KIỂM KÊ: Có chênh lệch lớn</field>
+            <field name="name">YÊU CẦU KIỂM KÊ: Có chênh lệch lớn</field>
             <field name="alert_type">audit_required</field>
             <field name="priority">3</field>
             <field name="product_id" ref="bhx_import_goods.product_coca"/>
@@ -29,7 +29,7 @@
 
         <!-- Sample Control Required Alert -->
         <record id="alert_control_coca" model="bhx.stock.alert">
-            <field name="name">🔎 YÊU CẦU KIỂM SOÁT: Hạn sử dụng</field>
+            <field name="name">YÊU CẦU KIỂM SOÁT: Hạn sử dụng</field>
             <field name="alert_type">control_required</field>
             <field name="priority">2</field>
             <field name="product_id" ref="bhx_import_goods.product_coca" />
