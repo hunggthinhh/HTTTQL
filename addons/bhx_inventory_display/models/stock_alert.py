@@ -69,19 +69,19 @@ class StockAlert(models.Model):
             rec.count_disposal = len(rec.disposal_ids)
 
     def action_view_inventory(self):
-        action = self.env.ref('bhx_audit_control.action_inventory_count').read()[0]
+        action = self.env.ref('bhx_audit_control.action_inventory_count').sudo().read()[0]
         action['domain'] = [('alert_id', '=', self.id)]
         action['context'] = {'default_alert_id': self.id}
         return action
 
     def action_view_goods_control(self):
-        action = self.env.ref('bhx_audit_control.action_goods_control').read()[0]
+        action = self.env.ref('bhx_audit_control.action_goods_control').sudo().read()[0]
         action['domain'] = [('alert_id', '=', self.id)]
         action['context'] = {'default_alert_id': self.id}
         return action
 
     def action_view_disposal(self):
-        action = self.env.ref('bhx_audit_control.action_disposal').read()[0]
+        action = self.env.ref('bhx_audit_control.action_disposal').sudo().read()[0]
         action['domain'] = [('alert_id', '=', self.id)]
         action['context'] = {'default_alert_id': self.id}
         return action
@@ -326,7 +326,7 @@ class StockAlert(models.Model):
                 except Exception:
                     store_wh = loc.location_id.warehouse_id
                 self.create({
-                    'name': f'🚨 YÊU CẦU KIỂM KÊ: {loc.product_id.name} (Tồn kho âm)',
+                    'name': f'YÊU CẦU KIỂM KÊ: {loc.product_id.name} (Tồn kho âm)',
                     'alert_type': 'audit_required',
                     'priority': '3',
                     'product_id': loc.product_id.id,

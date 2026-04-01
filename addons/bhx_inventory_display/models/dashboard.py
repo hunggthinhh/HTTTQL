@@ -58,31 +58,31 @@ class InventoryDashboard(models.Model):
         self.ensure_one()
         action = {}
         if self.code == 'fmcg':
-            action = self.env.ref('bhx_import_goods.action_fmcg_import').read()[0]
+            action = self.env.ref('bhx_import_goods.action_fmcg_import').sudo().read()[0]
             action['domain'] = [('state', 'in', ['draft', 'checking'])]
         elif self.code == 'fresh':
-            action = self.env.ref('bhx_import_goods.action_fresh_import').read()[0]
+            action = self.env.ref('bhx_import_goods.action_fresh_import').sudo().read()[0]
             action['domain'] = [('state', 'in', ['draft', 'receiving', 'temp_check'])]
         elif self.code == 'fruit':
-            action = self.env.ref('bhx_import_goods.action_fruit_veg_import').read()[0]
+            action = self.env.ref('bhx_import_goods.action_fruit_veg_import').sudo().read()[0]
             action['domain'] = [('state', 'in', ['draft', 'receiving', 'quality_check'])]
         elif self.code == 'replenish':
-            action = self.env.ref('bhx_inventory_display.action_bhx_replenishment').read()[0]
+            action = self.env.ref('bhx_inventory_display.action_bhx_replenishment').sudo().read()[0]
             action['domain'] = [('state', 'in', ['draft', 'in_progress'])]
         elif self.code == 'alert':
-            action = self.env.ref('bhx_inventory_display.action_stock_alert').read()[0]
+            action = self.env.ref('bhx_inventory_display.action_stock_alert').sudo().read()[0]
             action['domain'] = [('alert_type', 'in', ['near_expiry', 'expired', 'audit_required', 'control_required'])]
         elif self.code == 'pos':
-            action = self.env.ref('bhx_sales.action_sales_order').read()[0]
+            action = self.env.ref('bhx_sales.action_sales_order').sudo().read()[0]
             action['domain'] = [('state', '=', 'draft')]
         elif self.code == 'count':
-            action = self.env.ref('bhx_audit_control.action_inventory_count').read()[0]
+            action = self.env.ref('bhx_audit_control.action_inventory_count').sudo().read()[0]
             action['domain'] = [('state', 'in', ['draft', 'in_progress', 'review'])]
         elif self.code == 'goods_ctrl':
-            action = self.env.ref('bhx_audit_control.action_goods_control').read()[0]
+            action = self.env.ref('bhx_audit_control.action_goods_control').sudo().read()[0]
             action['domain'] = [('state', '=', 'draft')]
         elif self.code == 'disposal':
-            action = self.env.ref('bhx_audit_control.action_disposal').read()[0]
+            action = self.env.ref('bhx_audit_control.action_disposal').sudo().read()[0]
             action['domain'] = [('state', 'in', ['draft', 'confirm'])]
         
         # Override name to show it's filtered

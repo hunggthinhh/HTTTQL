@@ -30,8 +30,9 @@ class BHXPosController(http.Controller):
             ['id', 'name']
         )
         products = request.env['product.product'].search_read(
-            [('sale_ok', '=', True), ('type', '=', 'product')],
-            ['id', 'name', 'list_price', 'categ_id', 'barcode', 'uom_id', 'image_128']
+            [('sale_ok', '=', True), ('type', 'in', ('product', 'consu'))],
+            ['id', 'name', 'display_name', 'list_price', 'categ_id', 'barcode', 'uom_id', 'image_128'],
+            order='display_name'
         )
         return {'categories': categories, 'products': products}
 
@@ -111,7 +112,8 @@ input{{font-family:inherit;outline:none}}
 
 /* ═══ HEADER ═══ */
 .hdr{{display:flex;align-items:center;gap:12px;padding:0 16px;background:var(--d800);border-bottom:1px solid rgba(255,255,255,.06);height:52px;flex-shrink:0}}
-.hdr-brand{{font-weight:800;font-size:1.05rem;color:var(--g500);white-space:nowrap;display:flex;align-items:center;gap:6px}}
+.hdr-brand{{display:flex;align-items:center;height:100%}}
+.hdr-brand img{{height:28px;width:auto;object-fit:contain}}
 .hdr-search{{flex:1;display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:0 12px;height:36px}}
 .hdr-search input{{flex:1;background:0;border:0;color:var(--d100);font-size:.85rem}}.hdr-search input::placeholder{{color:var(--d500)}}
 .hdr-meta{{display:flex;align-items:center;gap:10px;white-space:nowrap;font-size:.82rem}}
@@ -141,9 +143,9 @@ input{{font-family:inherit;outline:none}}
 .ci.active{{border-color:var(--b500);background:rgba(59,130,246,.08)}}
 
 /* ── CUSTOMER INLINE ── */
-.cust-bar{{padding:8px 12px;border-top:1px solid rgba(255,255,255,.06)}}
-.cust-row{{display:flex;gap:6px}}
-.cust-input{{flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:6px;color:var(--d100);padding:7px 10px;font-size:.8rem}}
+.cust-bar{{padding:8px;border-top:1px solid rgba(255,255,255,0.06);background:rgba(0,0,0,0.1)}}
+.cust-row{{display:grid;grid-template-columns:110px 1fr;gap:4px;width:100%}}
+.cust-input{{width:100%;min-width:0;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:var(--d100);padding:6px 8px;font-size:0.75rem;box-sizing:border-box}}
 .cust-input::placeholder{{color:var(--d500)}}
 .cust-input:focus{{border-color:var(--b500)}}
 
@@ -174,12 +176,15 @@ input{{font-family:inherit;outline:none}}
 .cb.on{{background:var(--g500);border-color:var(--g500);color:#fff;font-weight:600}}
 .pgrid{{flex:1;overflow-y:auto;padding:12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:8px;align-content:start}}
 .pgrid::-webkit-scrollbar{{width:4px}}.pgrid::-webkit-scrollbar-thumb{{background:var(--d700);border-radius:4px}}
-.pcard{{background:var(--d800);border:1px solid rgba(255,255,255,.06);border-radius:var(--radius);overflow:hidden;cursor:pointer;transition:transform .12s var(--ease),border-color .12s;display:flex;flex-direction:column}}
-.pcard:hover{{transform:translateY(-2px);border-color:rgba(16,185,129,.3)}}.pcard:active{{transform:scale(.97)}}
-.pimg{{height:90px;background:var(--d900);display:flex;align-items:center;justify-content:center;font-size:2rem;border-bottom:1px solid rgba(255,255,255,.04)}}
-.pimg img{{max-height:100%;max-width:100%;object-fit:contain}}
-.pbody{{padding:8px}}.pname{{font-size:.77rem;font-weight:600;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:4px}}
-.pprice{{font-size:.9rem;font-weight:700;color:var(--g500)}}.puom{{font-size:.68rem;color:var(--d500)}}
+.pcard{{background:var(--d800);border:1px solid rgba(255,255,255,.1);border-radius:var(--radius);overflow:hidden;cursor:pointer;transition:all .2s var(--ease);display:flex;flex-direction:column;position:relative;height:140px}}
+.pcard:hover{{transform:translateY(-4px);border-color:var(--g500);box-shadow:var(--shadow-lg)}}
+.pimg{{flex:1;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden}}
+.pimg img{{width:100%;height:100%;object-fit:contain;transition:transform .3s}}
+.pcard:hover .pimg img{{transform:scale(1.1)}}
+.pbody{{position:absolute;bottom:0;left:0;right:0;background:rgba(15,23,42,0.85);backdrop-filter:blur(4px);padding:6px 8px;border-top:1px solid rgba(255,255,255,0.1);display:flex;flex-direction:column;gap:2px}}
+.pname{{font-size:.72rem;font-weight:700;color:#fff;line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:1.7rem}}
+.pprice{{font-size:.82rem;font-weight:800;color:var(--g400)}}
+.puom{{font-size:.6rem;color:var(--d400);margin-left:4px}}
 .ploading{{grid-column:1/-1;text-align:center;padding:48px;color:var(--d500)}}
 
 /* ═══════════════════════════════════════════
@@ -244,7 +249,7 @@ input{{font-family:inherit;outline:none}}
 <!-- ════════ SCREEN 1: MAIN ════════ -->
 <div id="s1" class="scr on">
   <div class="hdr">
-    <div class="hdr-brand">🛒 BHX POS</div>
+    <div class="hdr-brand"><img src="/bhx_sales/static/src/img/logo.png" alt="BHX Logo"/></div>
     <div class="hdr-search"><span>🔍</span><input id="search" placeholder="Tìm sản phẩm hoặc quét mã vạch..." autocomplete="off"/></div>
     <div class="hdr-meta"><span class="badge">{shift.name}</span><span>👤 {user.name}</span><a href="/web" class="hdr-exit">⬅ Thoát</a></div>
   </div>
@@ -288,9 +293,8 @@ input{{font-family:inherit;outline:none}}
       <button class="btn-back" onclick="P.show('s1')">← Quay lại</button>
       <div class="sec-title">Phương thức thanh toán</div>
       <button class="pm on" data-m="cash" onclick="P.payM(this)"><span class="pm-icon">💵</span>Tiền mặt</button>
-      <button class="pm" data-m="card" onclick="P.payM(this)"><span class="pm-icon">💳</span>Ngân hàng / Thẻ</button>
-      <button class="pm" data-m="ewallet" onclick="P.payM(this)"><span class="pm-icon">📱</span>Ví điện tử (QR)</button>
-      <button class="pm" data-m="transfer" onclick="P.payM(this)"><span class="pm-icon">🏦</span>Chuyển khoản</button>
+      <button class="pm" data-m="bank" onclick="P.payM(this)"><span class="pm-icon">🏦</span>Ngân hàng</button>
+      <button class="pm" data-m="card" onclick="P.payM(this)"><span class="pm-icon">💳</span>Thẻ</button>
       <div class="pay-sum-box">
         <div class="ps-row"><span>Mặt hàng:</span><span id="ps-cnt">0</span></div>
         <div class="ps-row"><span>Cần TT:</span><span id="ps-amt">0 ₫</span></div>
@@ -339,7 +343,7 @@ input{{font-family:inherit;outline:none}}
     </div>
     <div class="ok-right">
       <div class="rcpt">
-        <div class="rcpt-center"><div class="rcpt-logo">🛒</div><div class="rcpt-name">Bách Hóa Xanh</div><div class="rcpt-info">ĐT: 0965052123 | contact@bachhoaxanh.vn</div></div>
+        <div class="rcpt-center"><img src="/bhx_sales/static/src/img/logo.png" style="width:140px;margin-bottom:8px;"/><div class="rcpt-info"> contact@bachhoaxanh.vn</div></div>
         <div class="rcpt-div"></div><div class="rcpt-cashier">Thu ngân: <b>{user.name}</b></div><div class="rcpt-div"></div>
         <div id="rcpt-lines"></div><div class="rcpt-div"></div>
         <div class="rcpt-tot"><span>TỔNG CỘNG</span><span id="rcpt-total">0 ₫</span></div>
@@ -355,6 +359,6 @@ input{{font-family:inherit;outline:none}}
 </div><!-- /app -->
 
 <script id="bhx-init" type="application/json">{{"shift_id": {shift.id}}}</script>
-<script src="/bhx_sales/static/src/js/pos_logic.js"></script>
+<script src="/bhx_sales/static/src/js/pos_logic.js?v={int(request.env.cr.now().timestamp())}"></script>
 </body>
 </html>'''

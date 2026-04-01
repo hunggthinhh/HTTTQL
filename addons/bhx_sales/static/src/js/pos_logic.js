@@ -72,7 +72,8 @@ var P = (function() {
         }
         if (S.sq) {
             l = l.filter(function(p) {
-                return p.name.toLowerCase().indexOf(S.sq) !== -1 || (p.barcode && p.barcode.toLowerCase().indexOf(S.sq) !== -1);
+                var name = (p.display_name || p.name || '').toLowerCase();
+                return name.indexOf(S.sq) !== -1 || (p.barcode && p.barcode.toLowerCase().indexOf(S.sq) !== -1);
             });
         }
         if (!l.length) { g.innerHTML = '<div class="ploading">Khong tim thay san pham.</div>'; return; }
@@ -82,11 +83,17 @@ var P = (function() {
             var p = l[i];
             var imgHtml = p.image_128 ? '<img src="data:image/png;base64,' + p.image_128 + '"/>' : '\uD83D\uDECD\uFE0F';
             var uom = p.uom_id ? p.uom_id[1] : '';
+            var pName = (p.display_name || p.name || '').trim();
+            if (!pName) {
+                console.warn('Product missing name:', p.id);
+                pName = 'ID: ' + p.id;
+            }
             html += '<div class="pcard" onclick="P.add(' + p.id + ')">'
                 + '<div class="pimg">' + imgHtml + '</div>'
-                + '<div class="pbody"><div class="pname">' + p.name + '</div>'
-                + '<div class="pprice">' + vnd(p.list_price) + '</div>'
-                + '<div class="puom">' + uom + '</div></div></div>';
+                + '<div class="pbody">'
+                + '<div class="pname">' + pName + '</div>'
+                + '<div style="display:flex;align-items:baseline"><span class="pprice">' + vnd(p.list_price) + '</span><span class="puom">/ ' + uom + '</span></div>'
+                + '</div></div>';
         }
         g.innerHTML = html;
     }
@@ -110,8 +117,9 @@ var P = (function() {
             disc += d;
             var activeClass = (i === S.selIdx) ? ' active' : '';
             var discTxt = it.disc ? ' (-' + it.disc + '%)' : '';
+            var itName = (it.display_name || it.name || '').trim() || ('ID: ' + it.product_id);
             html += '<div class="ci' + activeClass + '" onclick="P.sel(' + i + ')">'
-                + '<div class="ci-info"><div class="ci-name">' + it.name + '</div>'
+                + '<div class="ci-info"><div class="ci-name">' + itName + '</div>'
                 + '<div class="ci-meta">' + vnd(it.price) + ' \u00D7 ' + it.qty + discTxt + '</div></div>'
                 + '<div class="ci-qty"><button class="qb" onclick="event.stopPropagation();P.chg(' + i + ',-1)">\u2212</button>'
                 + '<span class="qv">' + it.qty + '</span>'
@@ -140,7 +148,15 @@ var P = (function() {
         for (var j = 0; j < S.cart.length; j++) { if (S.cart[j].product_id === id) { e = S.cart[j]; break; } }
         if (e) { e.qty += 1; }
         else {
-            S.cart.push({product_id: p.id, name: p.name, price: p.list_price, qty: 1, disc: 0, uom: p.uom_id ? p.uom_id[1] : ''});
+            S.cart.push({
+                product_id: p.id, 
+                name: p.name, 
+                display_name: p.display_name,
+                price: p.list_price, 
+                qty: 1, 
+                disc: 0, 
+                uom: p.uom_id ? p.uom_id[1] : ''
+            });
             S.selIdx = S.cart.length - 1;
         }
         rCart();
@@ -217,7 +233,8 @@ var P = (function() {
         var lhtml = '';
         for (var j = 0; j < S.cart.length; j++) {
             var it = S.cart[j];
-            lhtml += '<div class="pr-line"><span>' + it.name + ' \u00D7' + it.qty + '</span><span>' + vnd(it.price * it.qty * (1 - it.disc / 100)) + '</span></div>';
+            var itName = it.display_name || it.name || 'Sản phẩm';
+            lhtml += '<div class="pr-line"><span>' + itName + ' \u00D7' + it.qty + '</span><span>' + vnd(it.price * it.qty * (1 - it.disc / 100)) + '</span></div>';
         }
         $('pr-lines').innerHTML = lhtml;
         show('s2');
@@ -292,12 +309,13 @@ var P = (function() {
         var lhtml = '';
         for (var i = 0; i < S.cart.length; i++) {
             var it = S.cart[i];
-            lhtml += '<div class="rcpt-ln"><span>' + it.name + ' \u00D7' + it.qty + '</span><span>' + vnd(it.price * it.qty * (1 - it.disc / 100)) + '</span></div>';
+            var itName = it.display_name || it.name || 'Sản phẩm';
+            lhtml += '<div class="rcpt-ln"><span>' + itName + ' \u00D7' + it.qty + '</span><span>' + vnd(it.price * it.qty * (1 - it.disc / 100)) + '</span></div>';
         }
         $('rcpt-lines').innerHTML = lhtml;
         $('rcpt-total').textContent = vnd(total());
-        var mm = {cash: 'Tien mat', card: 'Ngan hang', ewallet: 'Vi dien tu', transfer: 'Chuyen khoan'};
-        $('rcpt-meth').textContent = mm[S.payMeth] || 'Tien mat';
+        var mm = {cash: 'Tiền mặt', bank: 'Ngân hàng', card: 'Thẻ'};
+        $('rcpt-meth').textContent = mm[S.payMeth] || 'Tiền mặt';
         show('s3');
     }
 

@@ -133,7 +133,7 @@ class DisplayLocationLine(models.Model):
                 except Exception:
                     store_wh = self.location_id.warehouse_id
                 self.env['bhx.stock.alert'].create({
-                    'name': f'🚨 HẾT HÀNG: {self.product_id.name}' if alert_type == 'out_of_stock' else f'⚠️ SẮP HẾT: {self.product_id.name}',
+                    'name': f'HẾT HÀNG: {self.product_id.name}' if alert_type == 'out_of_stock' else f'⚠️ SẮP HẾT: {self.product_id.name}',
                     'alert_type': alert_type,
                     'priority': '3' if alert_type == 'out_of_stock' else '2',
                     'product_id': self.product_id.id,

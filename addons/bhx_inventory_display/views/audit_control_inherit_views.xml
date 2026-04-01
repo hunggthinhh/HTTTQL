@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Thêm thông tin Cảnh báo vào các form của Audit & Control -->
+    
+    <!-- Inventory Count Form -->
+    <record id="view_inventory_count_form_inherit" model="ir.ui.view">
+        <field name="name">bhx.inventory.count.form.inherit</field>
+        <field name="model">bhx.inventory.count</field>
+        <field name="inherit_id" ref="bhx_audit_control.view_inventory_count_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='warehouse_id']" position="after">
+                <field name="alert_id" options="{'no_open': True}" invisible="not alert_id"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Goods Control Form -->
+    <record id="view_goods_control_form_inherit" model="ir.ui.view">
+        <field name="name">bhx.goods.control.form.inherit</field>
+        <field name="model">bhx.goods.control</field>
+        <field name="inherit_id" ref="bhx_audit_control.view_goods_control_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='warehouse_id']" position="after">
+                <field name="alert_id" options="{'no_open': True}" invisible="not alert_id"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Disposal Form -->
+    <record id="view_disposal_form_inherit" model="ir.ui.view">
+        <field name="name">bhx.disposal.form.inherit</field>
+        <field name="model">bhx.disposal</field>
+        <field name="inherit_id" ref="bhx_audit_control.view_disposal_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='warehouse_id']" position="after">
+                <field name="alert_id" options="{'no_open': True}" invisible="not alert_id"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
