@@ -1,6 +1,6 @@
 'use strict';
 var P = (function() {
-    var S = {sid:0, prods:[], cats:[], cart:[], selIdx:-1, mode:'qty', payMeth:'cash', payInp:'', sq:''};
+    var S = {sid:0, prods:[], cats:[], cart:[], selIdx:-1, mode:'qty', payMeth:'cash', payInp:'', sq:'', cashBal:0};
 
     function vnd(n) {
         return new Intl.NumberFormat('vi-VN', {style:'currency', currency:'VND'}).format(n || 0);
@@ -37,10 +37,11 @@ var P = (function() {
     }
 
     function fetchData() {
-        rpc('/bhx/pos/get_data', {}).then(function(r) {
+        rpc('/bhx/pos/get_data', {shift_id: S.sid}).then(function(r) {
             if (r) {
                 S.prods = r.products || [];
                 S.cats = r.categories || [];
+                S.cashBal = parseFloat(r.current_cash_total) || 0;
                 rCats();
                 rProds();
             }
@@ -307,15 +308,31 @@ var P = (function() {
         var now = new Date();
         $('rcpt-date').textContent = now.toLocaleDateString('vi-VN') + ' ' + now.toLocaleTimeString('vi-VN');
         var lhtml = '';
+        var grandTotal = total();
         for (var i = 0; i < S.cart.length; i++) {
             var it = S.cart[i];
             var itName = it.display_name || it.name || 'Sản phẩm';
             lhtml += '<div class="rcpt-ln"><span>' + itName + ' \u00D7' + it.qty + '</span><span>' + vnd(it.price * it.qty * (1 - it.disc / 100)) + '</span></div>';
         }
         $('rcpt-lines').innerHTML = lhtml;
-        $('rcpt-total').textContent = vnd(total());
+        $('rcpt-total').textContent = vnd(grandTotal);
         var mm = {cash: 'Tiền mặt', bank: 'Ngân hàng', card: 'Thẻ'};
         $('rcpt-meth').textContent = mm[S.payMeth] || 'Tiền mặt';
+        
+        // Lucky Spin Integration: Order >= 1,000,000 VND
+        var spinBtn = $('btn-spin-lucky');
+        if (spinBtn) {
+            if (grandTotal >= 1000000) spinBtn.style.display = 'flex';
+            else spinBtn.style.display = 'none';
+        }
+
+        // Update live cash balance if payment was cash
+        if (S.payMeth === 'cash') {
+            S.cashBal += grandTotal;
+        }
+        var cashEl = $('ok-cash');
+        if (cashEl) cashEl.textContent = vnd(S.cashBal);
+        
         show('s3');
     }
 
@@ -339,10 +356,25 @@ var P = (function() {
         }).then(function(r) { return r.json(); }).then(function(d) { return d.result; });
     }
 
+    function printReceipt() {
+        window.print();
+    }
+
+    function goToSpin() {
+        var name = $('c-name').value.trim();
+        var phone = $('c-phone').value.trim();
+        var url = '/lucky-spin';
+        if (name || phone) {
+            url += '?name=' + encodeURIComponent(name) + '&phone=' + encodeURIComponent(phone);
+        }
+        window.open(url, '_blank');
+    }
+
     return {
         init: init, show: show, add: add, chg: chg, rm: rm, sel: sel,
         cat: cat, setMode: setMode, np: np, goPayment: goPayment,
-        payM: payM, pnp: pnp, confirm: confirm, newOrder: newOrder
+        payM: payM, pnp: pnp, confirm: confirm, newOrder: newOrder,
+        printReceipt: printReceipt, goToSpin: goToSpin
     };
 })();
 

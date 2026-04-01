@@ -25,6 +25,7 @@
 
                             <field name="payment_method"/>
                             <field name="promotion_id"/>
+                            <field name="picking_id" invisible="not picking_id"/>
                         </group>
                         <group string="Thông tin khách hàng">
                             <field name="customer_phone"/>
@@ -89,6 +90,7 @@
                        decoration-info="state == 'draft'"
                        decoration-success="state == 'done'"
                        decoration-danger="state in ('cancel','refund')"/>
+                <field name="picking_id" optional="hide"/>
             </tree>
         </field>
     </record>

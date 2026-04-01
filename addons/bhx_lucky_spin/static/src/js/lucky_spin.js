@@ -6,6 +6,13 @@
     'use strict';
 
     document.addEventListener('DOMContentLoaded', function () {
+        // Pre-fill info from URL if available
+        var urlParams = new URLSearchParams(window.location.search);
+        var preName = urlParams.get('name');
+        var prePhone = urlParams.get('phone');
+        if (preName) document.getElementById('customer_name').value = decodeURIComponent(preName);
+        if (prePhone) document.getElementById('customer_phone').value = decodeURIComponent(prePhone);
+
         var canvas = document.getElementById('luckyWheelCanvas');
         if (!canvas) return;
 

@@ -8,10 +8,18 @@ class BHXPosController(http.Controller):
     @http.route('/bhx/pos', type='http', auth='user')
     def bhx_pos_index(self, **kwargs):
         """Render giao diện POS Bách Hóa Xanh — standalone HTML"""
-        shift = request.env['bhx.sales.shift'].search([
-            ('state', '=', 'open'),
-            ('cashier_id', '=', request.env.user.id)
-        ], limit=1)
+        shift_id = int(kwargs.get('shift_id', 0))
+        shift = None
+        if shift_id:
+            s_rec = request.env['bhx.sales.shift'].browse(shift_id)
+            if s_rec.exists() and s_rec.state == 'open':
+                shift = s_rec
+        
+        if not shift:
+            shift = request.env['bhx.sales.shift'].search([
+                ('state', '=', 'open'),
+                ('cashier_id', '=', request.env.user.id)
+            ], limit=1)
 
         if not shift:
             return request.make_response(self._no_shift_html(), headers=[
@@ -241,6 +249,25 @@ input{{font-family:inherit;outline:none}}
 .rcpt-ln{{display:flex;justify-content:space-between;font-size:.76rem;margin-bottom:4px}}.rcpt-ln span:last-child{{font-weight:600}}
 .rcpt-tot{{display:flex;justify-content:space-between;font-weight:700;font-size:.9rem}}.rcpt-method{{text-align:right;color:var(--d500);font-size:.76rem;margin-top:5px}}
 .rcpt-foot{{text-align:center;font-size:.78rem;color:var(--d400);margin-top:8px}}
+
+@media print {{
+    body * {{ visibility: hidden; }}
+    #rcpt-paper, #rcpt-paper * {{ visibility: visible; }}
+    #rcpt-paper {{
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 80mm;
+        padding: 5mm;
+        margin: 0;
+        box-shadow: none;
+        background: white;
+        color: black;
+        font-size: 12px;
+        border: none;
+    }}
+    .ok-left, .hdr, .pay-left, .pay-center, .pay-right {{ display: none !important; }}
+}}
 </style>
 </head>
 <body>
@@ -293,7 +320,7 @@ input{{font-family:inherit;outline:none}}
       <button class="btn-back" onclick="P.show('s1')">← Quay lại</button>
       <div class="sec-title">Phương thức thanh toán</div>
       <button class="pm on" data-m="cash" onclick="P.payM(this)"><span class="pm-icon">💵</span>Tiền mặt</button>
-      <button class="pm" data-m="bank" onclick="P.payM(this)"><span class="pm-icon">🏦</span>Ngân hàng</button>
+      <button class="pm" data-m="transfer" onclick="P.payM(this)"><span class="pm-icon">🏦</span>Ngân hàng</button>
       <button class="pm" data-m="card" onclick="P.payM(this)"><span class="pm-icon">💳</span>Thẻ</button>
       <div class="pay-sum-box">
         <div class="ps-row"><span>Mặt hàng:</span><span id="ps-cnt">0</span></div>
@@ -338,11 +365,19 @@ input{{font-family:inherit;outline:none}}
       <div style="background:rgba(16,185,129,.1); border:2px dashed var(--g500); padding:10px 30px; border-radius:12px; margin:10px 0">
         <p style="font-size:.75rem; color:var(--d500); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px">Mã đơn hàng</p>
         <p class="ok-order" id="ok-order" style="font-size:1.5rem; font-weight:800; color:var(--g500); margin:0">...</p>
+        <div id="ok-cash-box" style="margin-top:15px; padding:10px; background:rgba(59,130,246,0.1); border-radius:8px; border:1px dashed var(--b500)">
+          <p style="font-size:.7rem; color:var(--b500); text-transform:uppercase; margin:0">Tiền mặt hiện tại trong két</p>
+          <p id="ok-cash" style="font-size:1.3rem; font-weight:700; color:var(--b500); margin:0">0 ₫</p>
+        </div>
       </div>
-      <div class="ok-acts"><button class="btn-print">🖨️ In biên lai</button><button class="btn-next" onclick="P.newOrder()">➕ Đơn hàng mới</button></div>
+      <div class="ok-acts">
+        <button class="btn-print" onclick="P.printReceipt()">🖨️ In biên lai</button>
+        <button id="btn-spin-lucky" class="btn-next" style="display:none; background:linear-gradient(135deg,#f59e0b,#d97706); border:none;" onclick="P.goToSpin()">🎰 Vòng quay may mắn</button>
+        <button class="btn-next" onclick="P.newOrder()">➕ Đơn hàng mới</button>
+      </div>
     </div>
     <div class="ok-right">
-      <div class="rcpt">
+      <div class="rcpt" id="rcpt-paper">
         <div class="rcpt-center"><img src="/bhx_sales/static/src/img/logo.png" style="width:140px;margin-bottom:8px;"/><div class="rcpt-info"> contact@bachhoaxanh.vn</div></div>
         <div class="rcpt-div"></div><div class="rcpt-cashier">Thu ngân: <b>{user.name}</b></div><div class="rcpt-div"></div>
         <div id="rcpt-lines"></div><div class="rcpt-div"></div>

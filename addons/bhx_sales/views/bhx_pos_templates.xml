@@ -177,6 +177,25 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 
 ::-webkit-scrollbar{width:4px;height:4px;}
 ::-webkit-scrollbar-thumb{background:#334155;border-radius:4px;}
+
+@media print {
+    body * { visibility: hidden; }
+    #receipt-paper, #receipt-paper * { visibility: visible; }
+    #receipt-paper {
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 80mm;
+        padding: 5mm;
+        margin: 0;
+        box-shadow: none;
+        background: white;
+        color: black;
+        font-size: 12px;
+        border: none;
+    }
+    .success-left, .pos-header, .payment-left, .payment-right, .pos-modal-overlay { display: none !important; }
+}
             </style>
 
             <!-- ===== SCREENS CONTAINER ===== -->
@@ -290,17 +309,18 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
                             <h2>Thanh toán thành công!</h2>
                             <p class="success-order-name" id="success-order-name">Mã đơn: ...</p>
                             <div class="success-actions">
-                                <button class="btn-print-receipt">🖨️ In biên lai</button>
+                                <button class="btn-print-receipt" onclick="BHXPos.printReceipt()">🖨️ In biên lai</button>
                                 <button class="btn-new-order" onclick="BHXPos.newOrder()">➕ Đơn hàng mới</button>
                             </div>
                         </div>
                         <div class="success-right">
-                            <div class="receipt-paper">
+                            <div class="receipt-paper" id="receipt-paper">
                                 <div class="receipt-logo">🛒</div>
                                 <div class="receipt-shop-name">Bách Hóa Xanh</div>
                                 <div class="receipt-shop-info">ĐT: 0965052123 | contact@bachhoaxanh.vn</div>
                                 <div class="receipt-divider"></div>
                                 <div class="receipt-cashier">Thu ngân: <strong><t t-out="user.name"/></strong></div>
+                                <div class="receipt-date" id="receipt-date" style="font-size:0.75rem;color:#64748b;text-align:center;margin-top:2px;"></div>
                                 <div class="receipt-divider"></div>
                                 <div id="receipt-lines"></div>
                                 <div class="receipt-divider"></div>
@@ -457,6 +477,7 @@ const BHXPos = (() => {
 
     function showSuccessScreen(orderName){
         document.getElementById('success-order-name').innerText='Mã đơn: '+orderName;
+        document.getElementById('receipt-date').innerText = new Date().toLocaleString('vi-VN');
         document.getElementById('receipt-lines').innerHTML=state.cart.map(i=>`&lt;div class="receipt-line"&gt;&lt;span&gt;${i.name} × ${i.qty}&lt;/span&gt;&lt;span&gt;${vnd(i.price*i.qty)}&lt;/span&gt;&lt;/div&gt;`).join('');
         document.getElementById('receipt-total').innerText=vnd(cartTotal());
         const m={cash:'Tiền mặt',card:'Ngân hàng',ewallet:'Ví điện tử',transfer:'Chuyển khoản'};
@@ -475,7 +496,9 @@ const BHXPos = (() => {
 
     async function jsonRpc(url,params){ const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',method:'call',id:1,params})}); const d=await r.json(); return d.result; }
 
-    return { init,addToCart,changeQty,removeFromCart,filterCategory,openCustomerModal,closeCustomerModal,confirmCustomer,clearCustomer,goToPayment,backToMain,selectPayMethod,numpad,confirmPayment,newOrder };
+    function printReceipt() { window.print(); }
+
+    return { init,addToCart,changeQty,removeFromCart,filterCategory,openCustomerModal,closeCustomerModal,confirmCustomer,clearCustomer,goToPayment,backToMain,selectPayMethod,numpad,confirmPayment,newOrder,printReceipt };
 })();
 
 document.addEventListener('DOMContentLoaded', () => BHXPos.init());

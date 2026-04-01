@@ -26,14 +26,18 @@ class SalesShift(models.Model):
     open_time = fields.Datetime(string='Giờ mở ca')
     close_time = fields.Datetime(string='Giờ đóng ca')
     opening_cash = fields.Monetary(string='Tiền mặt đầu ca', currency_field='currency_id')
-    closing_cash = fields.Monetary(string='Tiền mặt cuối ca', currency_field='currency_id')
+    closing_cash = fields.Monetary(string='Tiền mặt cuối ca (thực tế)', currency_field='currency_id')
+    expected_cash = fields.Monetary(
+        string='Tiền mặt lý thuyết', currency_field='currency_id',
+        compute='_compute_revenue',
+    )
     total_revenue = fields.Monetary(
         string='Tổng doanh thu ca', currency_field='currency_id',
-        compute='_compute_revenue', store=True,
+        compute='_compute_revenue',
     )
     total_transactions = fields.Integer(
         string='Số giao dịch',
-        compute='_compute_revenue', store=True,
+        compute='_compute_revenue',
     )
     currency_id = fields.Many2one('res.currency', default=lambda self: self.env.company.currency_id)
     company_id = fields.Many2one('res.company', default=lambda self: self.env.company)
@@ -46,12 +50,16 @@ class SalesShift(models.Model):
 
     order_ids = fields.One2many('bhx.sales.order', 'shift_id', string='Đơn hàng trong ca')
 
-    @api.depends('order_ids.total_amount', 'order_ids.state')
+    @api.depends('order_ids.total_amount', 'order_ids.state', 'order_ids.payment_method', 'opening_cash')
     def _compute_revenue(self):
         for shift in self:
             done_orders = shift.order_ids.filtered(lambda o: o.state == 'done')
             shift.total_revenue = sum(done_orders.mapped('total_amount'))
             shift.total_transactions = len(done_orders)
+
+            # Calculate expected cash: Opening + All Cash orders
+            cash_orders = done_orders.filtered(lambda o: o.payment_method == 'cash')
+            shift.expected_cash = shift.opening_cash + sum(cash_orders.mapped('total_amount'))
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -78,7 +86,7 @@ class SalesShift(models.Model):
             raise UserError(_('Ca đã đóng, không thể bán hàng.'))
         return {
             'type': 'ir.actions.act_url',
-            'url': '/bhx/pos',
+            'url': f'/bhx/pos?shift_id={self.id}',
             'target': 'self',
         }
 

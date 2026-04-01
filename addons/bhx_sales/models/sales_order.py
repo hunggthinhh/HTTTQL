@@ -65,6 +65,7 @@ class SalesOrder(models.Model):
     ], string='Trạng thái', default='draft', tracking=True)
 
     line_ids = fields.One2many('bhx.sales.order.line', 'order_id', string='Chi tiết hàng mua')
+    picking_id = fields.Many2one('stock.picking', string='Phiếu xuất kho', readonly=True, copy=False)
 
     @api.depends('line_ids.subtotal', 'discount_amount')
     def _compute_amounts(self):
@@ -83,7 +84,7 @@ class SalesOrder(models.Model):
         if not self.line_ids:
             raise UserError(_('Vui lòng thêm sản phẩm trước khi thanh toán.'))
         
-        # Tự động trừ tồn kho kệ lẻ (Module 2)
+        # 1. Tự động trừ tồn kho kệ lẻ (Module 2 - Custom Field)
         for line in self.line_ids:
             display_lines = self.env['bhx.display.location.line'].search([
                 ('product_id', '=', line.product_id.id),
@@ -92,7 +93,87 @@ class SalesOrder(models.Model):
             for display_line in display_lines:
                 display_line.current_qty -= line.qty
 
-        self.write({'state': 'done'})
+        # 2. Tạo phiếu xuất kho Odoo để trừ tồn kho thực tế
+        picking = self._create_stock_picking()
+        
+        self.write({
+            'state': 'done',
+            'picking_id': picking.id if picking else False
+        })
+
+    def _create_stock_picking(self):
+        """Tạo phiếu xuất kho Odoo (stock.picking) để trừ tồn kho thực tế - Bản cưỡng bức v2."""
+        self.ensure_one()
+        warehouse = self.warehouse_id
+        location_src = warehouse.lot_stock_id
+        
+        # Tìm vị trí khách hàng
+        try:
+            location_dest = self.env.ref('stock.stock_location_customers')
+        except:
+            location_dest = self.env['stock.location'].search([('usage', '=', 'customer')], limit=1)
+
+        # Tìm loại phiếu xuất kho
+        picking_type = self.env['stock.picking.type'].search([
+            ('warehouse_id', '=', warehouse.id),
+            ('code', '=', 'outgoing'),
+        ], limit=1)
+        if not picking_type:
+            picking_type = self.env['stock.picking.type'].search([('code', '=', 'outgoing')], limit=1)
+
+        if not picking_type or not location_dest:
+            return False
+
+        # 1. Tạo phiếu kho trước
+        picking = self.env['stock.picking'].create({
+            'picking_type_id': picking_type.id,
+            'location_id': location_src.id,
+            'location_dest_id': location_dest.id,
+            'origin': self.name,
+            'move_type': 'direct',
+        })
+
+        # 2. Tạo Stock Moves và gán số lượng
+        for line in self.line_ids:
+            if line.qty <= 0:
+                continue
+            
+            # Tạo Stock Move
+            move = self.env['stock.move'].create({
+                'name': line.product_id.name,
+                'product_id': line.product_id.id,
+                'product_uom_qty': line.qty,
+                'product_uom': line.product_uom_id.id,
+                'location_id': location_src.id,
+                'location_dest_id': location_dest.id,
+                'picking_id': picking.id,
+                'warehouse_id': warehouse.id,
+                'procure_method': 'make_to_stock',
+                'state': 'draft',
+            })
+            
+            # Xác nhận move
+            move._action_confirm()
+            
+            # Gán số lượng thực tế trực tiếp vào move (Odoo sẽ tự tạo/cập nhật move line chuẩn)
+            if 'quantity' in move._fields:
+                move.quantity = line.qty
+            if 'quantity_done' in move._fields:
+                move.quantity_done = line.qty
+                
+            if hasattr(move, 'picked'):
+                move.picked = True
+
+        # 3. Validate phiếu kho
+        try:
+            picking.with_context(
+                skip_immediate=True, 
+                skip_backorder=True,
+            ).button_validate()
+        except Exception as e:
+            self.message_post(body=_("LỖI TRỪ KHO: %s") % str(e))
+                
+        return picking
 
     def action_done_and_next(self):
         self.action_done()

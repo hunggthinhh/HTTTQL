@@ -40,6 +40,7 @@
                             <field name="open_time" readonly="1"/>
                             <field name="close_time" readonly="1"/>
                             <field name="opening_cash"/>
+                            <field name="expected_cash" readonly="1" widget="monetary" decoration-bf="1" decoration-success="1"/>
                             <field name="closing_cash"/>
                             <field name="currency_id" invisible="1"/>
                         </group>
@@ -88,6 +89,7 @@
                 <field name="cashier_id"/>
                 <field name="open_time"/>
                 <field name="close_time"/>
+                <field name="expected_cash" widget="monetary" decoration-bf="1"/>
                 <field name="total_transactions"/>
                 <field name="total_revenue" widget="monetary"/>
                 <field name="currency_id" invisible="1"/>
