@@ -46,6 +46,7 @@
                                     <field name="product_id"/>
                                     <field name="product_uom_id"/>
                                     <field name="lot_id"/>
+                                    <field name="display_location_id" optional="show"/>
                                     <field name="qty_before"/>
                                     <field name="qty_change"/>
                                     <field name="qty_after"/>
@@ -104,6 +105,10 @@
                 <filter string="Chờ duyệt" name="confirm" domain="[('state','=','confirm')]"/>
                 <filter string="Đã duyệt" name="approved" domain="[('state','=','approved')]"/>
                 <filter string="Hoàn thành" name="done" domain="[('state','=','done')]"/>
+                <separator/>
+                <filter string="Tăng tồn kho" name="increase" domain="[('adjustment_type','=','increase')]"/>
+                <filter string="Giảm tồn kho" name="decrease" domain="[('adjustment_type','=','decrease')]"/>
+                <filter string="Chuyển trưng bày" name="transfer" domain="[('adjustment_type','=','transfer')]"/>
                 <group expand="0" string="Nhóm theo">
                     <filter string="Loại điều chỉnh" name="group_type" context="{'group_by':'adjustment_type'}"/>
                     <filter string="Tháng" name="group_month" context="{'group_by':'date:month'}"/>

@@ -96,7 +96,14 @@ class Replenishment(models.Model):
             if display_line:
                 display_line.current_qty += line.qty_to_replenish
             else:
-                continue
+                # Nếu sản phẩm chưa có trên kệ này, tạo mới luôn
+                self.env['bhx.display.location.line'].create({
+                    'location_id': line.location_id.id,
+                    'product_id': line.product_id.id,
+                    'current_qty': line.qty_to_replenish,
+                    'min_qty': 5, # Mặc định tối thiểu là 5
+                    'max_qty': 20, # Mặc định tối đa là 20
+                })
 
         self.write({'state': 'done'})
 
@@ -115,7 +122,30 @@ class ReplenishmentLine(models.Model):
         ondelete='cascade',
     )
     product_id = fields.Many2one('product.product', string='Sản phẩm', required=True)
-    location_id = fields.Many2one('bhx.display.location', string='Vị trí kệ trưng bày', required=True)
+    location_id = fields.Many2one('bhx.display.location', string='Vị trí kệ trưng bày')
+
+    @api.onchange('product_id')
+    def _onchange_product_id(self):
+        """Tự động tìm và điền vị trí kệ khi chọn sản phẩm."""
+        if not self.product_id:
+            return
+        warehouse = self.replenishment_id.warehouse_id
+        if not warehouse:
+            return
+        # Ưu tiên tìm kệ mà sản phẩm này đang được trưng bày
+        display_line = self.env['bhx.display.location.line'].search([
+            ('product_id', '=', self.product_id.id),
+            ('location_id.warehouse_id', '=', warehouse.id),
+        ], limit=1)
+        if display_line:
+            self.location_id = display_line.location_id
+            self.qty_to_replenish = max(1, (display_line.max_qty or display_line.min_qty * 2) - display_line.current_qty)
+        else:
+            # Nếu sản phẩm chưa có kệ, lấy kệ đầu tiên trong cửa hàng
+            any_loc = self.env['bhx.display.location'].search([
+                ('warehouse_id', '=', warehouse.id),
+            ], limit=1)
+            self.location_id = any_loc if any_loc else False
     
     current_shelf_qty = fields.Float(
         string='Tồn trên kệ',

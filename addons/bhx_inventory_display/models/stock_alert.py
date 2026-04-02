@@ -130,14 +130,29 @@ class StockAlert(models.Model):
                 ('location_id.warehouse_id', '=', alert.warehouse_id.id)
             ], limit=1)
 
-            if display_line:
+            location_id = display_line.location_id.id if display_line else False
+            
+            if not location_id:
+                # Nếu hàng chưa từng có trên kệ, lấy đại 1 kệ trong cửa hàng
+                any_location = self.env['bhx.display.location'].search([
+                    ('warehouse_id', '=', alert.warehouse_id.id)
+                ], limit=1)
+                location_id = any_location.id if any_location else False
+
+            if location_id:
+                qty_to_rep = alert.max_qty - alert.current_qty
+                if qty_to_rep <= 0:
+                    qty_to_rep = 10 # Gợi ý mặc định 10 nếu không có min/max rõ ràng
+                    
                 self.env['bhx.replenishment.line'].create({
                     'replenishment_id': replenishment.id,
                     'product_id': alert.product_id.id,
-                    'location_id': display_line.location_id.id,
-                    'qty_to_replenish': alert.max_qty - alert.current_qty,
+                    'location_id': location_id,
+                    'qty_to_replenish': qty_to_rep,
                 })
                 alert.write({'state': 'processing', 'note': f'Đã thêm vào đợt châm hàng: {replenishment.name}'})
+            else:
+                alert.write({'note': 'Lỗi: Cửa hàng chưa có kệ trưng bày nào!'})
 
         return {
             'name': _('Đợt châm hàng vừa tạo'),
@@ -321,10 +336,7 @@ class StockAlert(models.Model):
             ], limit=1)
             
             if not existing_alert:
-                try:
-                    store_wh = self.env.ref('bhx_import_goods.bhx_warehouse')
-                except Exception:
-                    store_wh = loc.location_id.warehouse_id
+                store_wh = loc.location_id.warehouse_id
                 self.create({
                     'name': f'YÊU CẦU KIỂM KÊ: {loc.product_id.name} (Tồn kho âm)',
                     'alert_type': 'audit_required',
@@ -337,3 +349,76 @@ class StockAlert(models.Model):
                     'note': f'Hệ thống ghi nhận tồn kho vật lý bị âm ({loc.current_qty}) tại {loc.location_id.name}. Yêu cầu kiểm kê.',
                     'responsible_id': self.env.ref('base.user_root').id,
                 })
+
+    @api.model
+    def cron_generate_expiry_alerts(self):
+        """Tự động quét toàn bộ kho để tìm hàng sắp hết hạn và ĐÓNG các cảnh báo đã hết hàng."""
+        today = date.today()
+        near_expiry_threshold = today + timedelta(days=15)
+        
+        # 1. ĐỐNG CẢNH BÁO CŨ: Nếu tồn kho của lô đó đã về 0
+        active_expiry_alerts = self.search([
+            ('state', 'in', ['new', 'processing']),
+            ('alert_type', 'in', ['near_expiry', 'expired']),
+            ('lot_id', '!=', False)
+        ])
+        for alert in active_expiry_alerts:
+            # Kiểm tra tồn kho của Lô hàng này tại các kho nội bộ
+            quants = self.env['stock.quant'].search([
+                ('product_id', '=', alert.product_id.id),
+                ('lot_id', '=', alert.lot_id.id),
+                ('location_id.usage', '=', 'internal'),
+                ('quantity', '>', 0)
+            ])
+            if not quants:
+                alert.write({'state': 'resolved', 'note': '[Tự động] Đóng cảnh báo vì tồn kho lô đã hết.'})
+
+        # 2. TẠO CẢNH BÁO MỚI (Lô có Date và còn tồn kho)
+        lots = self.env['stock.lot'].search([
+            ('expiration_date', '!=', False)
+        ])
+        
+        for lot in lots:
+            # Kiểm tra tồn kho thực tế của lô này
+            quants = self.env['stock.quant'].search([
+                ('lot_id', '=', lot.id),
+                ('quantity', '>', 0),
+                ('location_id.usage', '=', 'internal')
+            ])
+            if not quants:
+                continue
+            
+            exp_date = lot.expiration_date.date()
+            current_qty = sum(quants.mapped('quantity'))
+            warehouse = quants[0].location_id.warehouse_id
+            
+            alert_type = False
+            priority = '1'
+            
+            if exp_date <= today:
+                alert_type = 'expired'
+                priority = '3'
+            elif exp_date <= near_expiry_threshold:
+                alert_type = 'near_expiry'
+                priority = '2'
+                
+            if alert_type:
+                existing = self.search([
+                    ('product_id', '=', lot.product_id.id),
+                    ('lot_id', '=', lot.id),
+                    ('state', 'in', ['new', 'processing']),
+                    ('alert_type', '=', alert_type)
+                ], limit=1)
+                
+                if not existing:
+                    self.create({
+                        'name': f'DATE: {lot.product_id.name} (Lô: {lot.name})',
+                        'alert_type': alert_type,
+                        'priority': priority,
+                        'product_id': lot.product_id.id,
+                        'lot_id': lot.id,
+                        'warehouse_id': warehouse.id if warehouse else self.env.ref('bhx_import_goods.bhx_warehouse').id,
+                        'expiry_date': exp_date,
+                        'current_qty': current_qty,
+                        'note': f'Lô hàng {lot.name} sắp/đã hết hạn vào ngày {exp_date}.',
+                    })

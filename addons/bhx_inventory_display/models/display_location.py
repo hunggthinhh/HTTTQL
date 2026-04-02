@@ -128,10 +128,7 @@ class DisplayLocationLine(models.Model):
             ], limit=1)
             
             if not existing_alert:
-                try:
-                    store_wh = self.env.ref('bhx_import_goods.bhx_warehouse')
-                except Exception:
-                    store_wh = self.location_id.warehouse_id
+                store_wh = self.location_id.warehouse_id
                 self.env['bhx.stock.alert'].create({
                     'name': f'HẾT HÀNG: {self.product_id.name}' if alert_type == 'out_of_stock' else f'⚠️ SẮP HẾT: {self.product_id.name}',
                     'alert_type': alert_type,

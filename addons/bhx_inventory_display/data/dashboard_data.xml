@@ -43,6 +43,13 @@
             <field name="color">9</field>
         </record>
 
+        <record id="bhx_dashboard_empty_shelf" model="bhx.inventory.dashboard">
+            <field name="name">Xử lý kệ trống</field>
+            <field name="code">empty_shelf</field>
+            <field name="sequence">55</field>
+            <field name="color">10</field>
+        </record>
+
         <!-- Kiểm kê & Kiểm soát & Xử lý hàng -->
         <record id="bhx_dashboard_count" model="bhx.inventory.dashboard">
             <field name="name">Phiếu Kiểm kê</field>

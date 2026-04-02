@@ -12,7 +12,8 @@ class InventoryDashboard(models.Model):
         ('fresh', 'Nhập hàng Tươi Sống'),
         ('fruit', 'Nhập Rau Củ Quả'),
         ('replenish', 'Đợt châm hàng'),
-        ('alert', 'Cảnh báo Tồn/Date'),
+        ('alert', 'Cảnh báo Date/Kiểm kê'),
+        ('empty_shelf', 'Xử lý kệ trống'),
         ('pos', 'Bán hàng POS'),
         ('count', 'Kiểm kê'),
         ('goods_ctrl', 'Kiểm soát hàng hóa'),
@@ -35,13 +36,17 @@ class InventoryDashboard(models.Model):
                 rec.count_pending = self.env['bhx.fruit.veg.import'].search_count([('state', 'in', ['draft', 'receiving', 'quality_check'])])
             elif rec.code == 'replenish':
                 rec.count_pending = self.env['bhx.replenishment'].search_count([('state', 'in', ['draft', 'in_progress'])])
-            elif rec.code == 'alert':
-                # Đếm tất cả cảnh báo mới hoặc đang xử lý (Hết hạn, Sắp hết hạn, Sắp hết hàng, Hết hàng, Yêu cầu kiểm kê, Yêu cầu kiểm soát)
-                count = self.env['bhx.stock.alert'].search_count([
+            elif rec.code == 'empty_shelf':
+                rec.count_pending = self.env['bhx.stock.alert'].search_count([
                     ('state', 'in', ['new', 'processing']),
-                    ('alert_type', 'in', ['low_stock', 'out_of_stock', 'near_expiry', 'expired', 'audit_required', 'control_required'])
+                    ('alert_type', 'in', ['low_stock', 'out_of_stock'])
                 ])
-                rec.count_pending = count
+            elif rec.code == 'alert':
+                # Đếm cảnh báo (Hết hạn, Sắp hết hạn, Yêu cầu kiểm kê, Yêu cầu kiểm soát)
+                rec.count_pending = self.env['bhx.stock.alert'].search_count([
+                    ('state', 'in', ['new', 'processing']),
+                    ('alert_type', 'in', ['near_expiry', 'expired', 'audit_required', 'control_required'])
+                ])
             elif rec.code == 'pos':
                 # Giả sử POS thì số đơn hàng hôm nay
                 rec.count_pending = self.env['bhx.sales.order'].search_count([('state', '=', 'draft')])
@@ -69,9 +74,18 @@ class InventoryDashboard(models.Model):
         elif self.code == 'replenish':
             action = self.env.ref('bhx_inventory_display.action_bhx_replenishment').sudo().read()[0]
             action['domain'] = [('state', 'in', ['draft', 'in_progress'])]
+        elif self.code == 'empty_shelf':
+            action = self.env.ref('bhx_inventory_display.action_stock_alert').sudo().read()[0]
+            action['domain'] = [
+                ('state', 'in', ['new', 'processing']),
+                ('alert_type', 'in', ['low_stock', 'out_of_stock'])
+            ]
         elif self.code == 'alert':
             action = self.env.ref('bhx_inventory_display.action_stock_alert').sudo().read()[0]
-            action['domain'] = [('alert_type', 'in', ['near_expiry', 'expired', 'audit_required', 'control_required'])]
+            action['domain'] = [
+                ('state', 'in', ['new', 'processing']),
+                ('alert_type', 'in', ['near_expiry', 'expired', 'audit_required', 'control_required'])
+            ]
         elif self.code == 'pos':
             action = self.env.ref('bhx_sales.action_sales_order').sudo().read()[0]
             action['domain'] = [('state', '=', 'draft')]
