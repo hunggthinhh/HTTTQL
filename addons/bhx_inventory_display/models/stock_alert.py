@@ -27,9 +27,8 @@ class StockAlert(models.Model):
         ('3', 'Khẩn cấp'),
     ], string='Mức độ ưu tiên', default='1', tracking=True)
     product_id = fields.Many2one('product.product', string='Sản phẩm', required=True)
-    warehouse_id = fields.Many2one('stock.warehouse', string='Kho cửa hàng', required=True)
+    warehouse_id = fields.Many2one('stock.warehouse', string='Kho / Cửa hàng', required=True)
     lot_id = fields.Many2one('stock.lot', string='Số lô')
-    display_location_id = fields.Many2one('bhx.display.location', string='Kệ trưng bày')
     expiry_date = fields.Date(string='Hạn sử dụng')
     days_to_expiry = fields.Integer(
         string='Số ngày còn lại',
@@ -323,11 +322,6 @@ class StockAlert(models.Model):
         }
 
     @api.model
-    def cron_scan_all_shelves(self):
-        # Dùng để fix lỗi tồn dư cron ở database cũ
-        pass
-
-    @api.model
     def cron_generate_audit_alerts(self):
         # Tự động tạo cảnh báo kiểm kê khi phát hiện tồn kho âm
         locations = self.env['bhx.display.location.line'].search([
@@ -349,7 +343,6 @@ class StockAlert(models.Model):
                     'priority': '3',
                     'product_id': loc.product_id.id,
                     'warehouse_id': store_wh.id,
-                    'display_location_id': loc.location_id.id,
                     'current_qty': loc.current_qty,
                     'min_qty': loc.min_qty,
                     'max_qty': loc.max_qty or (loc.min_qty * 2),
@@ -361,7 +354,7 @@ class StockAlert(models.Model):
     def cron_generate_expiry_alerts(self):
         """Tự động quét toàn bộ kho để tìm hàng sắp hết hạn và ĐÓNG các cảnh báo đã hết hàng."""
         today = date.today()
-        near_expiry_threshold = today + timedelta(days=30)
+        near_expiry_threshold = today + timedelta(days=15)
         
         # 1. ĐỐNG CẢNH BÁO CŨ: Nếu tồn kho của lô đó đã về 0
         active_expiry_alerts = self.search([

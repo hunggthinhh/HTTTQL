@@ -37,20 +37,8 @@ class FreshImport(models.Model):
         tracking=True,
     )
     slaughter_date = fields.Date(string='Ngày giết mổ / Sản xuất')
-    def _default_vehicle_plate(self):
-        import random
-        prefix = random.choice(['51C', '51D', '60C', '61C', '50H', '29C', '61D', '51R'])
-        suffix = f"{random.randint(100, 999)}.{random.randint(10, 99)}"
-        return f"{prefix}-{suffix}"
-
-    def _default_delivery_note(self):
-        import random
-        from datetime import datetime
-        return f"DN-{datetime.now().strftime('%Y%m%d')}-{random.randint(1000, 9999)}"
-
     expiry_date = fields.Date(string='Hạn sử dụng', required=True, tracking=True)
-    delivery_note = fields.Char(string='Số phiếu giao hàng', default=lambda self: self._default_delivery_note())
-    vehicle_plate = fields.Char(string='Biển số xe vận chuyển', default=lambda self: self._default_vehicle_plate())
+    vehicle_plate = fields.Char(string='Biển số xe vận chuyển')
     temperature_arrival = fields.Float(string='Nhiệt độ khi đến (°C)')
     temperature_storage = fields.Float(string='Nhiệt độ bảo quản yêu cầu (°C)')
     health_cert_no = fields.Char(string='Số giấy chứng nhận ATTP')
@@ -144,7 +132,7 @@ class FreshImport(models.Model):
         self.write({'state': 'temp_check'})
 
     def _create_stock_picking(self):
-        """Tạo phiếu nhập kho Odoo (stock.picking) để cập nhật tồn kho dự trữ."""
+        """Tạo phiếu nhập kho Odoo và gán HSD vào Lô hàng."""
         self.ensure_one()
         warehouse = self.warehouse_id
         location_dest = warehouse.lot_stock_id
@@ -157,37 +145,61 @@ class FreshImport(models.Model):
         if not picking_type:
             raise UserError(_('Không tìm thấy loại phiếu nhập kho cho kho "%s".') % warehouse.name)
 
-        moves = []
-        for line in self.line_ids:
-            if line.weight <= 0:
-                continue
-            moves.append((0, 0, {
-                'name': line.product_id.name,
-                'product_id': line.product_id.id,
-                'product_uom_qty': line.weight,
-                'product_uom': line.product_id.uom_id.id,
-                'location_id': location_src.id,
-                'location_dest_id': location_dest.id,
-                'origin': self.name,
-            }))
-
-        if not moves:
-            raise UserError(_('Không có hàng nào để nhập kho (trọng lượng = 0).'))
-
+        # 1. Tạo Phiếu kho
         picking = self.env['stock.picking'].create({
             'partner_id': self.supplier_id.id,
             'picking_type_id': picking_type.id,
             'location_id': location_src.id,
             'location_dest_id': location_dest.id,
             'origin': self.name,
-            'move_ids': moves,
         })
-        picking.action_confirm()
+
+        # 2. Tạo Moves và Move Lines thủ công để gán Lô & HSD
+        for line in self.line_ids:
+            if line.weight <= 0:
+                continue
+            
+            move = self.env['stock.move'].create({
+                'name': line.product_id.name,
+                'product_id': line.product_id.id,
+                'product_uom_qty': line.weight,
+                'product_uom': line.product_id.uom_id.id,
+                'location_id': location_src.id,
+                'location_dest_id': location_dest.id,
+                'picking_id': picking.id,
+                'picking_type_id': picking_type.id,
+            })
+            
+            move._action_confirm()
+
+            # Tạo Số lô (Lot) và gán HSD
+            lot_name = line.lot_no or f"LOT-{self.name}-{line.product_id.id}"
+            lot = self.env['stock.lot'].create({
+                'name': lot_name,
+                'product_id': line.product_id.id,
+                'company_id': self.company_id.id,
+                'expiration_date': self.expiry_date, # Gán HSD từ phiếu nhập Fresh
+            })
+
+            # Tạo Move Line để gán Lot
+            ml_vals = {
+                'product_id': line.product_id.id,
+                'product_uom_id': line.product_uom_id.id,
+                'location_id': location_src.id,
+                'location_dest_id': location_dest.id,
+                'picking_id': picking.id,
+                'move_id': move.id,
+                'lot_id': lot.id,
+            }
+            if 'quantity' in self.env['stock.move.line']._fields:
+                ml_vals['quantity'] = line.weight
+            else:
+                ml_vals['quantity_done'] = line.weight
+                
+            self.env['stock.move.line'].create(ml_vals)
+
+        # 3. Hoàn thành phiếu kho
         picking.action_assign()
-        for move in picking.move_ids:
-            move.quantity = move.product_uom_qty
-            if hasattr(move, 'picked'):
-                move.picked = True
         picking.with_context(skip_immediate=True, skip_backorder=True).button_validate()
         return picking
 

@@ -26,6 +26,7 @@
                     <button name="action_reopen" string="Mở lại"
                             type="object" invisible="state not in ('resolved', 'ignored')"/>
                     <field name="state" widget="statusbar" statusbar_visible="new,processing,resolved"/>
+                    <field name="state" widget="statusbar" statusbar_visible="new,processing,resolved"/>
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
@@ -47,9 +48,9 @@
                             <field name="alert_type"/>
                             <field name="priority" widget="priority"/>
                             <field name="product_id"/>
+                            <field name="display_location_id" invisible="alert_type not in ('low_stock', 'out_of_stock')"/>
                             <field name="warehouse_id"/>
                             <field name="lot_id"/>
-                            <field name="display_location_id"/>
                             <field name="expiry_date"/>
                             <field name="days_to_expiry"/>
                         </group>
@@ -79,14 +80,16 @@
         <field name="arch" type="xml">
             <tree string="Cảnh báo tồn kho"
                   decoration-danger="alert_type in ('out_of_stock','expired','audit_required') or days_to_expiry &lt; 0"
-                  decoration-warning="alert_type in ('low_stock','control_required') or (expiry_date != False and days_to_expiry &gt;= 0 and days_to_expiry &lt; 30)"
+                  decoration-warning="alert_type in ('low_stock','near_expiry','control_required') or (days_to_expiry &gt;= 0 and days_to_expiry &lt;= 3)"
                   decoration-muted="state in ('resolved','ignored')">
+                <header>
+                </header>
                 <field name="priority" widget="priority"/>
                 <field name="name"/>
                 <field name="alert_type"/>
                 <field name="product_id"/>
-                <field name="warehouse_id"/>
                 <field name="display_location_id" optional="show"/>
+                <field name="warehouse_id"/>
                 <field name="lot_id" optional="hide"/>
                 <field name="expiry_date" optional="show"/>
                 <field name="days_to_expiry" optional="show"/>
@@ -144,7 +147,7 @@
                 <group expand="0" string="Nhóm theo">
                     <filter string="Loại cảnh báo" name="group_type" context="{'group_by':'alert_type'}"/>
                     <filter string="Độ ưu tiên" name="group_prio" context="{'group_by':'priority'}"/>
-                    <filter string="Kho cửa hàng" name="group_wh" context="{'group_by':'warehouse_id'}"/>
+                    <filter string="Cửa hàng" name="group_wh" context="{'group_by':'warehouse_id'}"/>
                 </group>
             </search>
         </field>
@@ -155,7 +158,6 @@
         <field name="name">Cảnh báo tồn kho</field>
         <field name="res_model">bhx.stock.alert</field>
         <field name="view_mode">tree,form</field>
-        <field name="domain">['|', ('alert_type', 'not in', ['near_expiry', 'expired']), '&amp;', ('alert_type', 'in', ['near_expiry', 'expired']), ('days_to_expiry', '&lt;', 30)]</field>
         <field name="search_view_id" ref="view_stock_alert_search"/>
         <field name="context">{'search_default_new': 1, 'search_default_processing': 1}</field>
         <field name="help" type="html">
@@ -173,5 +175,14 @@
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">Không có cảnh báo kiểm kê nào!</p>
         </field>
+    </record>
+
+
+    <!-- SERVER ACTION ĐỂ QUÉT KỆ THỦ CÔNG -->
+    <record id="action_server_scan_shelves" model="ir.actions.server">
+        <field name="name">Robot Quét Kệ (Kiểm tra hàng trống)</field>
+        <field name="model_id" ref="model_bhx_stock_alert"/>
+        <field name="state">code</field>
+        <field name="code">model.cron_scan_all_shelves()</field>
     </record>
 </odoo>

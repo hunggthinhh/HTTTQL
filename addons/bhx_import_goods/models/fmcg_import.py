@@ -40,19 +40,8 @@ class FmcgImport(models.Model):
         default=lambda self: self.env.user,
         tracking=True,
     )
-    def _default_vehicle_plate(self):
-        import random
-        prefix = random.choice(['51C', '51D', '60C', '61C', '50H', '29C', '61D', '51R'])
-        suffix = f"{random.randint(100, 999)}.{random.randint(10, 99)}"
-        return f"{prefix}-{suffix}"
-
-    def _default_delivery_note(self):
-        import random
-        from datetime import datetime
-        return f"DN-{datetime.now().strftime('%Y%m%d')}-{random.randint(1000, 9999)}"
-
-    delivery_note = fields.Char(string='Số phiếu giao hàng', default=lambda self: self._default_delivery_note())
-    vehicle_plate = fields.Char(string='Biển số xe', default=lambda self: self._default_vehicle_plate())
+    delivery_note = fields.Char(string='Số phiếu giao hàng')
+    vehicle_plate = fields.Char(string='Biển số xe')
     note = fields.Text(string='Ghi chú')
     state = fields.Selection([
         ('draft', 'Nháp'),
@@ -109,10 +98,13 @@ class FmcgImport(models.Model):
         self.write({'state': 'checking'})
 
     def _create_stock_picking(self):
-        """Tạo phiếu nhập kho Odoo (stock.picking) để cập nhật tồn kho dự trữ."""
+        """
+        HÀM QUAN TRỌNG: Tạo phiếu nhập kho và GHI NHỚ HSD VÀO LÔ HÀNG ODOO.
+        Nếu xóa đoạn này, hệ thống sẽ không thể cảnh báo HSD.
+        """
         self.ensure_one()
         warehouse = self.warehouse_id
-        location_dest = warehouse.lot_stock_id  # Kho dự trữ chính
+        location_dest = warehouse.lot_stock_id
         location_src = self.env.ref('stock.stock_location_suppliers')
 
         picking_type = self.env['stock.picking.type'].search([
@@ -120,24 +112,7 @@ class FmcgImport(models.Model):
             ('code', '=', 'incoming'),
         ], limit=1)
         if not picking_type:
-            raise UserError(_('Không tìm thấy loại phiếu nhập kho cho kho "%s".') % warehouse.name)
-
-        moves = []
-        for line in self.line_ids:
-            if line.checked_qty <= 0:
-                continue
-            moves.append((0, 0, {
-                'name': line.product_id.name,
-                'product_id': line.product_id.id,
-                'product_uom_qty': line.checked_qty,
-                'product_uom': line.product_uom_id.id,
-                'location_id': location_src.id,
-                'location_dest_id': location_dest.id,
-                'origin': self.name,
-            }))
-
-        if not moves:
-            raise UserError(_('Không có hàng nào để nhập kho (số lượng = 0).'))
+            raise UserError(_('Không tìm thấy loại phiếu nhập kho.'))
 
         picking = self.env['stock.picking'].create({
             'partner_id': self.supplier_id.id,
@@ -145,15 +120,55 @@ class FmcgImport(models.Model):
             'location_id': location_src.id,
             'location_dest_id': location_dest.id,
             'origin': self.name,
-            'move_ids': moves,
         })
-        picking.action_confirm()
+
+        moves_count = 0
+        for line in self.line_ids:
+            # Chỉ tạo phiếu nhập cho những dòng có số lượng > 0
+            if line.checked_qty <= 0:
+                continue
+            
+            moves_count += 1
+            move = self.env['stock.move'].create({
+                'name': line.product_id.name,
+                'product_id': line.product_id.id,
+                'product_uom_qty': line.checked_qty,
+                'product_uom': line.product_uom_id.id,
+                'location_id': location_src.id,
+                'location_dest_id': location_dest.id,
+                'picking_id': picking.id,
+                'picking_type_id': picking_type.id,
+            })
+            move._action_confirm()
+
+            # TỰ ĐỘNG TẠO LÔ HÀNG VÀ GÁN HSD
+            lot_name = line.lot_no or f"LOT-{self.name}-{line.product_id.id}"
+            lot_vals = {
+                'name': lot_name,
+                'product_id': line.product_id.id,
+                'company_id': self.company_id.id,
+            }
+            # Gán HSD nếu User có nhập
+            if line.expiry_date:
+                lot_vals['expiration_date'] = line.expiry_date
+                
+            lot = self.env['stock.lot'].create(lot_vals)
+
+            self.env['stock.move.line'].create({
+                'product_id': line.product_id.id,
+                'product_uom_id': line.product_uom_id.id,
+                'location_id': location_src.id,
+                'location_dest_id': location_dest.id,
+                'picking_id': picking.id,
+                'move_id': move.id,
+                'lot_id': lot.id,
+                'quantity': line.checked_qty,
+            })
+
+        if moves_count == 0:
+            raise UserError(_('LỖI: Bạn chưa nhập "SL thực nhận" cho sản phẩm nào. Hệ thống không thể nhập kho với số lượng bằng 0.'))
+
         picking.action_assign()
-        # Điền đủ số lượng thực nhận
-        for move in picking.move_ids:
-            move.quantity = move.product_uom_qty
-            if hasattr(move, 'picked'):
-                move.picked = True
         picking.with_context(skip_immediate=True, skip_backorder=True).button_validate()
         return picking
 
@@ -251,8 +266,3 @@ class FmcgImportLine(models.Model):
     def _onchange_product_id(self):
         if self.product_id:
             self.unit_price = self.product_id.standard_price
-            if not self.lot_no:
-                import random
-                import string
-                random_str = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
-                self.lot_no = f"LOT-FMCG-{random_str}"
