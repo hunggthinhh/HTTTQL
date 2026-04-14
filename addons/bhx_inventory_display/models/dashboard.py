@@ -1,4 +1,5 @@
 from odoo import models, fields, api, _
+from datetime import timedelta
 
 class InventoryDashboard(models.Model):
     _name = 'bhx.inventory.dashboard'
@@ -42,10 +43,15 @@ class InventoryDashboard(models.Model):
                     ('alert_type', 'in', ['low_stock', 'out_of_stock'])
                 ])
             elif rec.code == 'alert':
-                # Đếm cảnh báo (Hết hạn, Sắp hết hạn, Yêu cầu kiểm kê, Yêu cầu kiểm soát)
+                # Đếm cảnh báo (Hết hạn, Sắp hết hạn, Yêu cầu kiểm kê, Yêu cầu kiểm soát) 
+                # Chốt: Hiển thị nếu là Kiểm kê/Kiểm soát HOẶC có Hạn sử dụng < 30 ngày (bất kể loại nào)
+                today = fields.Date.today()
+                limit_date = fields.Date.to_string(today + timedelta(days=30))
                 rec.count_pending = self.env['bhx.stock.alert'].search_count([
                     ('state', 'in', ['new', 'processing']),
-                    ('alert_type', 'in', ['near_expiry', 'expired', 'audit_required', 'control_required'])
+                    '|',
+                    ('alert_type', 'in', ['audit_required', 'control_required']),
+                    '&', ('expiry_date', '!=', False), ('expiry_date', '<', limit_date)
                 ])
             elif rec.code == 'pos':
                 # Giả sử POS thì số đơn hàng hôm nay
@@ -81,10 +87,14 @@ class InventoryDashboard(models.Model):
                 ('alert_type', 'in', ['low_stock', 'out_of_stock'])
             ]
         elif self.code == 'alert':
+            today = fields.Date.today()
+            limit_date = fields.Date.to_string(today + timedelta(days=30))
             action = self.env.ref('bhx_inventory_display.action_stock_alert').sudo().read()[0]
             action['domain'] = [
                 ('state', 'in', ['new', 'processing']),
-                ('alert_type', 'in', ['near_expiry', 'expired', 'audit_required', 'control_required'])
+                '|',
+                ('alert_type', 'in', ['audit_required', 'control_required']),
+                '&', ('expiry_date', '!=', False), ('expiry_date', '<', limit_date)
             ]
         elif self.code == 'pos':
             action = self.env.ref('bhx_sales.action_sales_order').sudo().read()[0]

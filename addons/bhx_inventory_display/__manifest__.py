@@ -17,7 +17,6 @@
         'security/ir.model.access.csv',
         'data/sequence_data.xml',
         'data/dashboard_data.xml',
-        'data/demo_data.xml',
         'data/cron_data.xml',
         'views/dashboard_template.xml',
         'views/display_location_views.xml',

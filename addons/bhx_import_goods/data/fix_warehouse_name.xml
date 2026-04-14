@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Cập nhật tên kho từ dữ liệu demo cũ "BHX quận 12" thành "Kho cửa hàng" -->
+        <record id="bhx_import_goods.bhx_warehouse" model="stock.warehouse">
+            <field name="name">Kho cửa hàng</field>
+        </record>
+    </data>
+</odoo>

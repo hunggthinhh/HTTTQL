@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Xóa các icon ⚠️ còn sót lại trong các bản ghi hiện có -->
+        <function model="bhx.stock.alert" name="search_read" eval="[[('name', 'like', '⚠️')], ['id', 'name']]"/>
+        <function model="bhx.stock.alert" name="write">
+            <value model="bhx.stock.alert" eval="obj().search([('name', 'like', '⚠️')]).ids"/>
+            <value eval="{'name': 'obj().name.replace(\'⚠️ \', \'\').replace(\'⚠️\', \'\')'}"/>
+        </function>
+    </data>
+</odoo>

@@ -40,8 +40,19 @@ class FmcgImport(models.Model):
         default=lambda self: self.env.user,
         tracking=True,
     )
-    delivery_note = fields.Char(string='Số phiếu giao hàng')
-    vehicle_plate = fields.Char(string='Biển số xe')
+    def _default_vehicle_plate(self):
+        import random
+        prefix = random.choice(['51C', '51D', '60C', '61C', '50H', '29C', '61D', '51R'])
+        suffix = f"{random.randint(100, 999)}.{random.randint(10, 99)}"
+        return f"{prefix}-{suffix}"
+
+    def _default_delivery_note(self):
+        import random
+        from datetime import datetime
+        return f"DN-{datetime.now().strftime('%Y%m%d')}-{random.randint(1000, 9999)}"
+
+    delivery_note = fields.Char(string='Số phiếu giao hàng', default=lambda self: self._default_delivery_note())
+    vehicle_plate = fields.Char(string='Biển số xe', default=lambda self: self._default_vehicle_plate())
     note = fields.Text(string='Ghi chú')
     state = fields.Selection([
         ('draft', 'Nháp'),
@@ -240,3 +251,8 @@ class FmcgImportLine(models.Model):
     def _onchange_product_id(self):
         if self.product_id:
             self.unit_price = self.product_id.standard_price
+            if not self.lot_no:
+                import random
+                import string
+                random_str = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+                self.lot_no = f"LOT-FMCG-{random_str}"

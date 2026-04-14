@@ -47,7 +47,19 @@ class FruitVegImport(models.Model):
         default=lambda self: self.env.user,
         tracking=True,
     )
-    vehicle_plate = fields.Char(string='Biển số xe')
+    def _default_vehicle_plate(self):
+        import random
+        prefix = random.choice(['51C', '51D', '60C', '61C', '50H', '29C', '61D', '51R'])
+        suffix = f"{random.randint(100, 999)}.{random.randint(10, 99)}"
+        return f"{prefix}-{suffix}"
+
+    def _default_delivery_note(self):
+        import random
+        from datetime import datetime
+        return f"DN-{datetime.now().strftime('%Y%m%d')}-{random.randint(1000, 9999)}"
+
+    vehicle_plate = fields.Char(string='Biển số xe', default=lambda self: self._default_vehicle_plate())
+    delivery_note = fields.Char(string='Số phiếu giao hàng', default=lambda self: self._default_delivery_note())
     temperature_check = fields.Float(string='Nhiệt độ bảo quản (°C)')
     note = fields.Text(string='Ghi chú')
     state = fields.Selection([

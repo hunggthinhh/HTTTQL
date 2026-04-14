@@ -24,7 +24,7 @@ class Replenishment(models.Model):
     )
     warehouse_id = fields.Many2one(
         'stock.warehouse',
-        string='Cửa hàng / Kho',
+        string='Kho cửa hàng',
         required=True,
         tracking=True,
     )

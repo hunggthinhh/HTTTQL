@@ -16,6 +16,7 @@
         'security/ir.model.access.csv',
         'data/sequence_data.xml',
         'data/demo_data.xml',
+        'data/fix_warehouse_name.xml',
         'views/fmcg_import_views.xml',
         'views/fruit_veg_import_views.xml',
         'views/fresh_import_views.xml',
