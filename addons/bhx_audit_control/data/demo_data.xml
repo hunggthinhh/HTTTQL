@@ -1,24 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data noupdate="1">
-        <!-- Sample Inventory Count Plan -->
-        <record id="count_weekly_fmcg" model="bhx.inventory.count">
-            <field name="date" eval="time.strftime('%Y-%m-%d')"/>
-            <field name="count_type">cycle</field>
-            <field name="warehouse_id" ref="bhx_import_goods.bhx_warehouse"/>
-            <field name="zone">fmcg</field>
-            <field name="responsible_id" ref="base.user_admin"/>
-            <field name="note">Kiểm kê định kỳ nhóm hàng Mì tôm / Đồ uống.</field>
-            <field name="state">draft</field>
-        </record>
-
-        <!-- Sample Goods Control -->
-        <record id="control_morning_today" model="bhx.goods.control">
-            <field name="check_date" eval="time.strftime('%Y-%m-%d')"/>
-            <field name="check_type">morning</field>
-            <field name="warehouse_id" ref="bhx_import_goods.bhx_warehouse"/>
-            <field name="responsible_id" ref="base.user_admin"/>
-            <field name="state">draft</field>
-        </record>
+        <!-- Demo data removed to allow clean start -->
     </data>
 </odoo>

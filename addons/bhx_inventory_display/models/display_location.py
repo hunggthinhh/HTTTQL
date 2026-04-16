@@ -95,7 +95,7 @@ class DisplayLocationLine(models.Model):
         related='product_id.uom_id', store=True,
     )
     min_qty = fields.Float(string='Số lượng tối thiểu trưng bày', default=1)
-    max_qty = fields.Float(string='Số lượng tối đa trưng bày')
+    max_qty = fields.Float(string='Số lượng tối đa trưng bày', default=20)
     current_qty = fields.Float(string='Số lượng hiện tại')
     planogram_pos = fields.Char(string='Vị trí planogram (hàng x cột)')
     facing = fields.Integer(string='Số mặt hàng (Facing)', default=1)
@@ -106,29 +106,31 @@ class DisplayLocationLine(models.Model):
         res = super(DisplayLocationLine, self).write(vals)
         if 'current_qty' in vals:
             for line in self:
-                line._check_low_stock_alert()
+                line._check_stock_alert()
         return res
 
     @api.model_create_multi
     def create(self, vals_list):
         lines = super(DisplayLocationLine, self).create(vals_list)
         for line in lines:
-            line._check_low_stock_alert()
+            line._check_stock_alert()
         return lines
 
-    def _check_low_stock_alert(self):
+    def _check_stock_alert(self):
         self.ensure_one()
+        store_wh = self.location_id.warehouse_id
+        
+        # 1. Kiểm tra thiếu hàng (Shortage)
         if self.current_qty < self.min_qty:
             alert_type = 'out_of_stock' if self.current_qty <= 0 else 'low_stock'
-            existing_alert = self.env['bhx.stock.alert'].search([
+            existing_shortage = self.env['bhx.stock.alert'].search([
                 ('product_id', '=', self.product_id.id),
-                ('warehouse_id', '=', self.location_id.warehouse_id.id),
+                ('warehouse_id', '=', store_wh.id),
                 ('state', 'in', ['new', 'processing']),
                 ('alert_type', 'in', ['low_stock', 'out_of_stock'])
             ], limit=1)
             
-            if not existing_alert:
-                store_wh = self.location_id.warehouse_id
+            if not existing_shortage:
                 self.env['bhx.stock.alert'].create({
                     'name': f'HẾT HÀNG: {self.product_id.name}' if alert_type == 'out_of_stock' else f'SẮP HẾT: {self.product_id.name}',
                     'alert_type': alert_type,
@@ -140,20 +142,65 @@ class DisplayLocationLine(models.Model):
                     'min_qty': self.min_qty,
                     'max_qty': self.max_qty or (self.min_qty * 2),
                     'note': f'Sản phẩm tại {self.location_id.name} đang ở mức báo động.',
-                    'responsible_id': self.env.ref('base.user_root').id, # OdooBot
+                    'responsible_id': self.env.ref('base.user_root').id,
                 })
-        else:
-            # Nếu tồn kho đã phục hồi, tự động đóng các cảnh báo cũ
-            existing_alerts = self.env['bhx.stock.alert'].search([
+            
+            # Đóng các cảnh báo dư thừa nếu có
+            existing_overstock = self.env['bhx.stock.alert'].search([
                 ('product_id', '=', self.product_id.id),
-                ('warehouse_id', '=', self.location_id.warehouse_id.id),
+                ('warehouse_id', '=', store_wh.id),
+                ('state', 'in', ['new', 'processing']),
+                ('alert_type', '=', 'overstock')
+            ])
+            if existing_overstock:
+                existing_overstock.write({'state': 'resolved', 'note': '[Tự động] Đóng cảnh báo dư thừa vì hàng đã quay về mức thiếu.'})
+
+        # 2. Kiểm tra dư hàng (Overstock)
+        elif self.max_qty > 0 and self.current_qty > self.max_qty:
+            existing_overstock = self.env['bhx.stock.alert'].search([
+                ('product_id', '=', self.product_id.id),
+                ('warehouse_id', '=', store_wh.id),
+                ('state', 'in', ['new', 'processing']),
+                ('alert_type', '=', 'overstock')
+            ], limit=1)
+            
+            if not existing_overstock:
+                self.env['bhx.stock.alert'].create({
+                    'name': f'QUÁ TẢI: {self.product_id.name}',
+                    'alert_type': 'overstock',
+                    'priority': '1',
+                    'product_id': self.product_id.id,
+                    'warehouse_id': store_wh.id,
+                    'display_location_id': self.location_id.id,
+                    'current_qty': self.current_qty,
+                    'min_qty': self.min_qty,
+                    'max_qty': self.max_qty,
+                    'note': f'Số lượng trên kệ ({self.current_qty}) vượt quá mức tối đa cho phép ({self.max_qty}). Cần rút bớt hàng về kho.',
+                    'responsible_id': self.env.ref('base.user_root').id,
+                })
+
+            # Đóng các cảnh báo thiếu hàng nếu có
+            existing_shortage = self.env['bhx.stock.alert'].search([
+                ('product_id', '=', self.product_id.id),
+                ('warehouse_id', '=', store_wh.id),
                 ('state', 'in', ['new', 'processing']),
                 ('alert_type', 'in', ['low_stock', 'out_of_stock'])
+            ])
+            if existing_shortage:
+                existing_shortage.write({'state': 'resolved', 'note': '[Tự động] Đóng cảnh báo thiếu vì hàng đã dư.'})
+
+        # 3. Mức tồn kho bình thường
+        else:
+            existing_alerts = self.env['bhx.stock.alert'].search([
+                ('product_id', '=', self.product_id.id),
+                ('warehouse_id', '=', store_wh.id),
+                ('state', 'in', ['new', 'processing']),
+                ('alert_type', 'in', ['low_stock', 'out_of_stock', 'overstock'])
             ])
             if existing_alerts:
                 existing_alerts.write({
                     'state': 'resolved',
-                    'note': '[Tự động] Đóng cảnh báo vì tồn kho thực tế đã được châm đầy.'
+                    'note': '[Tự động] Đóng cảnh báo vì tồn kho trên kệ đã được điều chỉnh về mức an toàn.'
                 })
 
 
@@ -161,14 +208,17 @@ class DisplayLocationLine(models.Model):
         ('ok', 'Đủ hàng'),
         ('low', 'Sắp hết'),
         ('empty', 'Hết hàng'),
+        ('overstock', 'Tồn quá nhiều'),
     ], string='Trạng thái', compute='_compute_status', store=True)
 
-    @api.depends('current_qty', 'min_qty')
+    @api.depends('current_qty', 'min_qty', 'max_qty')
     def _compute_status(self):
         for line in self:
             if line.current_qty <= 0:
                 line.status = 'empty'
             elif line.current_qty < line.min_qty:
                 line.status = 'low'
+            elif line.max_qty > 0 and line.current_qty > line.max_qty:
+                line.status = 'overstock'
             else:
                 line.status = 'ok'

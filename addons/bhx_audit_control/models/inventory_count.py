@@ -15,10 +15,8 @@ class InventoryCount(models.Model):
     date = fields.Date(string='Ngày kiểm kê', required=True, default=fields.Date.today, tracking=True)
     count_type = fields.Selection([
         ('full', 'Kiểm kê toàn bộ'),
-        ('cycle', 'Kiểm kê luân phiên (Cycle Count)'),
         ('spot', 'Kiểm kê đột xuất'),
-        ('expiry', 'Kiểm tra hạn sử dụng'),
-    ], string='Loại kiểm kê', required=True, default='cycle', tracking=True)
+    ], string='Loại kiểm kê', required=True, default='full', tracking=True)
     warehouse_id = fields.Many2one('stock.warehouse', string='Kho / Cửa hàng', required=True, tracking=True)
     zone = fields.Selection([
         ('fmcg', 'Khu FMCG'),

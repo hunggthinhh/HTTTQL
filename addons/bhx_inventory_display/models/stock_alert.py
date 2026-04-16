@@ -57,10 +57,12 @@ class StockAlert(models.Model):
     inventory_count_ids = fields.One2many('bhx.inventory.count', 'alert_id', string='Phiếu kiểm kê')
     goods_control_ids = fields.One2many('bhx.goods.control', 'alert_id', string='Phiếu kiểm soát')
     disposal_ids = fields.One2many('bhx.disposal', 'alert_id', string='Phiếu huỷ hàng')
+    adjustment_ids = fields.One2many('bhx.stock.adjustment', 'alert_id', string='Phiếu điều chỉnh')
 
     count_inventory = fields.Integer(compute='_compute_audit_counts', string='Số kiểm kê')
     count_goods_control = fields.Integer(compute='_compute_audit_counts', string='Số kiểm soát')
     count_disposal = fields.Integer(compute='_compute_audit_counts', string='Số xử lý')
+    count_adjustment = fields.Integer(compute='_compute_audit_counts', string='Số điều chỉnh')
 
     @api.depends('inventory_count_ids', 'goods_control_ids', 'disposal_ids')
     def _compute_audit_counts(self):
@@ -68,6 +70,7 @@ class StockAlert(models.Model):
             rec.count_inventory = len(rec.inventory_count_ids)
             rec.count_goods_control = len(rec.goods_control_ids)
             rec.count_disposal = len(rec.disposal_ids)
+            rec.count_adjustment = len(rec.adjustment_ids)
 
     def action_view_inventory(self):
         action = self.env.ref('bhx_audit_control.action_inventory_count').sudo().read()[0]
@@ -83,6 +86,12 @@ class StockAlert(models.Model):
 
     def action_view_disposal(self):
         action = self.env.ref('bhx_audit_control.action_disposal').sudo().read()[0]
+        action['domain'] = [('alert_id', '=', self.id)]
+        action['context'] = {'default_alert_id': self.id}
+        return action
+
+    def action_view_adjustment(self):
+        action = self.env.ref('bhx_inventory_display.action_stock_adjustment').sudo().read()[0]
         action['domain'] = [('alert_id', '=', self.id)]
         action['context'] = {'default_alert_id': self.id}
         return action
@@ -223,6 +232,59 @@ class StockAlert(models.Model):
             'res_model': import_model,
             'view_mode': 'form',
             'res_id': new_import.id,
+            'target': 'current',
+        }
+
+    def action_create_stock_withdraw(self):
+        self.ensure_one()
+        if self.state == 'resolved':
+            raise UserError(_('Cảnh báo này đã được xử lý.'))
+        if self.alert_type != 'overstock':
+            raise UserError(_('Chức năng này chỉ dành cho cảnh báo dư hàng.'))
+
+        qty_to_withdraw = self.current_qty - self.max_qty
+        if qty_to_withdraw <= 0:
+            raise UserError(_('Số lượng hiện tại không vượt quá mức tối đa.'))
+
+        # Tạo phiếu điều chỉnh tồn kho loại Chuyển trưng bày, lý do Hoàn kho từ quầy trưng bày
+        # Ưu tiên lấy Lot ID từ cảnh báo nếu có
+        line_vals = {
+            'product_id': self.product_id.id,
+            'lot_id': self.lot_id.id if self.lot_id else False,
+            'display_location_id': self.display_location_id.id,
+            'qty_before': self.current_qty,
+            'qty_change': qty_to_withdraw,
+        }
+        
+        # Nếu chưa có Lot ID, thử tìm lot cũ nhất trong kho để gợi ý
+        if not line_vals['lot_id']:
+            quants = self.env['stock.quant'].search([
+                ('product_id', '=', self.product_id.id),
+                ('location_id.warehouse_id', '=', self.warehouse_id.id),
+                ('lot_id', '!=', False),
+                ('quantity', '>', 0)
+            ], order='in_date asc', limit=1)
+            if quants:
+                line_vals['lot_id'] = quants.lot_id.id
+
+        adjustment_vals = {
+            'alert_id': self.id,
+            'adjustment_type': 'transfer',
+            'reason': 'display_return',
+            'warehouse_id': self.warehouse_id.id,
+            'note': f'Rút hàng dư từ kệ {self.display_location_id.name if self.display_location_id else "N/A"} (Cảnh báo: {self.name})',
+            'line_ids': [(0, 0, line_vals)]
+        }
+        
+        new_adjustment = self.env['bhx.stock.adjustment'].create(adjustment_vals)
+        self.write({'state': 'processing', 'note': f'Đã tạo phiếu rút hàng: {new_adjustment.name}'})
+        
+        return {
+            'name': _('Phiếu điều chỉnh (Rút hàng)'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'bhx.stock.adjustment',
+            'view_mode': 'form',
+            'res_id': new_adjustment.id,
             'target': 'current',
         }
 

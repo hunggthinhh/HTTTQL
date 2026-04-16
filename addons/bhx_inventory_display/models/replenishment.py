@@ -123,6 +123,7 @@ class ReplenishmentLine(models.Model):
     )
     product_id = fields.Many2one('product.product', string='Sản phẩm', required=True)
     location_id = fields.Many2one('bhx.display.location', string='Vị trí kệ trưng bày')
+    expiry_date = fields.Date(string='Hạn sử dụng')
 
     @api.onchange('product_id')
     def _onchange_product_id(self):
@@ -140,12 +141,40 @@ class ReplenishmentLine(models.Model):
         if display_line:
             self.location_id = display_line.location_id
             self.qty_to_replenish = max(1, (display_line.max_qty or display_line.min_qty * 2) - display_line.current_qty)
+        
+        if display_line:
+            self.location_id = display_line.location_id
+            self.qty_to_replenish = max(1, (display_line.max_qty or display_line.min_qty * 2) - display_line.current_qty)
+        
+        # --- Tìm HSD gợi ý (Ưu tiên từ các đợt nhập hàng gần nhất) ---
+        import_line = False
+        # 1. FMCG
+        import_line = self.env['bhx.fmcg.import.line'].search([
+            ('product_id', '=', self.product_id.id),
+            ('expiry_date', '!=', False)
+        ], order='id desc', limit=1)
+        
+        # 2. Fresh (nếu không thấy FMCG)
+        if not import_line:
+            import_line = self.env['bhx.fresh.import.line'].search([
+                ('product_id', '=', self.product_id.id),
+                ('expiry_date', '!=', False)
+            ], order='id desc', limit=1)
+            
+        # 3. Fruit & Veg
+        if not import_line:
+            import_line = self.env['bhx.fruit.veg.import.line'].search([
+                ('product_id', '=', self.product_id.id),
+                ('expiry_date', '!=', False)
+            ], order='id desc', limit=1)
+            
+        if import_line:
+            self.expiry_date = import_line.expiry_date
         else:
-            # Nếu sản phẩm chưa có kệ, lấy kệ đầu tiên trong cửa hàng
-            any_loc = self.env['bhx.display.location'].search([
-                ('warehouse_id', '=', warehouse.id),
-            ], limit=1)
-            self.location_id = any_loc if any_loc else False
+            # Fallback: Lấy theo số lô tồn kho nếu không thấy lịch sử nhập
+            lot = self.env['stock.lot'].search([('product_id', '=', self.product_id.id)], order='expiration_date asc', limit=1)
+            if lot:
+                self.expiry_date = lot.expiration_date
     
     current_shelf_qty = fields.Float(
         string='Tồn trên kệ',

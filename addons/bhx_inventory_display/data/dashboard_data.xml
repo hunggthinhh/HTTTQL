@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-    <odoo noupdate="1">
+<odoo>
         <!-- Các Thẻ Nghiệp Vụ Kanban cho Bách Hóa Xanh -->
         <record id="bhx_dashboard_fmcg" model="bhx.inventory.dashboard">
             <field name="name">Kiểm hàng FMCG</field>
@@ -64,6 +64,20 @@
             <field name="code">disposal</field>
             <field name="sequence">90</field>
             <field name="color">8</field>
+        </record>
+
+        <record id="bhx_dashboard_adjustment" model="bhx.inventory.dashboard">
+            <field name="name">Điều chỉnh tồn kho</field>
+            <field name="code">adjustment</field>
+            <field name="sequence">65</field>
+            <field name="color">9</field>
+        </record>
+
+        <record id="bhx_dashboard_overstock_withdrawal" model="bhx.inventory.dashboard">
+            <field name="name">Rút hàng quá tải</field>
+            <field name="code">overstock_withdrawal</field>
+            <field name="sequence">66</field>
+            <field name="color">1</field>
         </record>
     
 </odoo>

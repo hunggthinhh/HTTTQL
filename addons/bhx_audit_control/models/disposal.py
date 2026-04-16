@@ -181,5 +181,26 @@ class DisposalLine(models.Model):
 
     @api.onchange('product_id')
     def _onchange_product(self):
-        if self.product_id:
-            self.unit_cost = self.product_id.standard_price
+        if not self.product_id:
+            return
+            
+        self.unit_cost = self.product_id.standard_price
+        
+        warehouse = self.disposal_id.warehouse_id or self.env['stock.warehouse'].search([], limit=1)
+        if warehouse:
+            # Tìm số lô & HSD gợi ý (Ưu tiên lô gần hết hạn nhất)
+            quant = self.env['stock.quant'].search([
+                ('product_id', '=', self.product_id.id),
+                ('location_id', 'child_of', warehouse.lot_stock_id.id),
+                ('lot_id', '!=', False),
+                ('quantity', '>', 0)
+            ], order='lot_id.expiration_date asc', limit=1)
+            
+            if quant:
+                self.lot_id = quant.lot_id
+                self.expiry_date = quant.lot_id.expiration_date
+            else:
+                lot = self.env['stock.lot'].search([('product_id', '=', self.product_id.id)], order='expiration_date asc', limit=1)
+                if lot:
+                    self.lot_id = lot
+                    self.expiry_date = lot.expiration_date

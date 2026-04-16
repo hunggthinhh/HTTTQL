@@ -1,5 +1,5 @@
 from odoo import models, fields, api, _
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 
 
 class StockAdjustment(models.Model):
@@ -54,6 +54,28 @@ class StockAdjustment(models.Model):
     company_id = fields.Many2one(
         'res.company', default=lambda self: self.env.company,
     )
+    inventory_count_id = fields.Many2one('bhx.inventory.count', string='Từ phiếu kiểm kê', readonly=True)
+    alert_id = fields.Many2one('bhx.stock.alert', string='Từ cảnh báo', readonly=True)
+    overstock_msg = fields.Char(compute='_compute_overstock_msg')
+
+    def _compute_overstock_msg(self):
+        overstock_count = self.env['bhx.stock.alert'].search_count([
+            ('alert_type', '=', 'overstock'),
+            ('state', 'in', ['new', 'processing'])
+        ])
+        msg = _('CHÚ Ý: Có %s sản phẩm đang bị quá tải trên kệ. Cần tạo phiếu rút hàng!') % overstock_count if overstock_count else False
+        for rec in self:
+            rec.overstock_msg = msg
+
+    @api.constrains('line_ids', 'reason')
+    def _check_return_lines(self):
+        for rec in self:
+            if rec.reason == 'display_return':
+                if not rec.line_ids:
+                    raise ValidationError(_('Phiếu rút hàng từ quầy trưng bày phải có ít nhất một dòng chi tiết.'))
+                for line in rec.line_ids:
+                    if not line.display_location_id:
+                        raise ValidationError(_('Vui lòng chọn Kệ trưng bày cho sản phẩm %s để thực hiện rút hàng.') % line.product_id.name)
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -69,7 +91,6 @@ class StockAdjustment(models.Model):
 
     def action_approve(self):
         self.ensure_one()
-        self._apply_stock_moves()
         self.write({
             'state': 'approved',
             'approved_id': self.env.user.id,
@@ -145,6 +166,8 @@ class StockAdjustment(models.Model):
                         })
 
     def action_done(self):
+        self.ensure_one()
+        self._apply_stock_moves()
         self.write({'state': 'done'})
 
     def action_cancel(self):
@@ -168,7 +191,7 @@ class StockAdjustmentLine(models.Model):
         'uom.uom', string='ĐVT',
         related='product_id.uom_id', store=True,
     )
-    lot_id = fields.Many2one('stock.lot', string='Số lô / HSD')
+    lot_id = fields.Many2one('stock.lot', string='Số lô')
     display_location_id = fields.Many2one('bhx.display.location', string='Kệ trưng bày (Nếu có)')
     qty_before = fields.Float(string='Tồn kho trước')
     qty_change = fields.Float(string='Số lượng điều chỉnh', required=True)
@@ -189,3 +212,36 @@ class StockAdjustmentLine(models.Model):
                 line.qty_after = line.qty_before - line.qty_change
             else:
                 line.qty_after = line.qty_before + line.qty_change
+
+    @api.onchange('product_id')
+    def _onchange_product_id(self):
+        if not self.product_id:
+            return
+        
+        warehouse = self.adjustment_id.warehouse_id or self.env['stock.warehouse'].search([], limit=1)
+        if warehouse:
+            # 1. Tồn kho hệ thống
+            self.qty_before = self.product_id.with_context(warehouse=warehouse.id).qty_available
+            
+            # 2. Số lô
+            quant = self.env['stock.quant'].search([
+                ('product_id', '=', self.product_id.id),
+                ('location_id', 'child_of', warehouse.lot_stock_id.id),
+                ('lot_id', '!=', False),
+                ('quantity', '>', 0)
+            ], order='in_date desc', limit=1)
+            
+            if quant:
+                self.lot_id = quant.lot_id
+            else:
+                lot = self.env['stock.lot'].search([('product_id', '=', self.product_id.id)], order='create_date desc', limit=1)
+                if lot:
+                    self.lot_id = lot
+            
+            # 3. Kệ trưng bày
+            display_line = self.env['bhx.display.location.line'].search([
+                ('product_id', '=', self.product_id.id),
+                ('location_id.warehouse_id', '=', warehouse.id)
+            ], limit=1)
+            if display_line:
+                self.display_location_id = display_line.location_id

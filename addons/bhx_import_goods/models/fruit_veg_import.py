@@ -1,4 +1,5 @@
 from odoo import models, fields, api, _
+from datetime import timedelta
 from odoo.exceptions import UserError, ValidationError
 
 
@@ -61,6 +62,7 @@ class FruitVegImport(models.Model):
     vehicle_plate = fields.Char(string='Biển số xe', default=lambda self: self._default_vehicle_plate())
     delivery_note = fields.Char(string='Số phiếu giao hàng', default=lambda self: self._default_delivery_note())
     temperature_check = fields.Float(string='Nhiệt độ bảo quản (°C)')
+    expiry_date = fields.Date(string='Hạn sử dụng')
     note = fields.Text(string='Ghi chú')
     state = fields.Selection([
         ('draft', 'Nháp'),
@@ -173,6 +175,36 @@ class FruitVegImport(models.Model):
         picking = self._create_stock_picking()
         self.write({'state': 'done', 'picking_id': picking.id})
 
+        # --- Tạo cảnh báo Date nếu HSD < 3 ngày ---
+        from datetime import date
+        today = date.today()
+        limit_date = today + timedelta(days=3)
+        if self.expiry_date and self.expiry_date < limit_date:
+            alert_type = 'expired' if self.expiry_date <= today else 'near_expiry'
+            priority = '3' if alert_type == 'expired' else '2'
+            
+            for line in self.line_ids:
+                # Kiểm tra tránh trùng lặp
+                existing_alert = self.env['bhx.stock.alert'].search([
+                    ('product_id', '=', line.product_id.id),
+                    ('warehouse_id', '=', self.warehouse_id.id),
+                    ('expiry_date', '=', self.expiry_date),
+                    ('state', 'in', ['new', 'processing']),
+                    ('alert_type', 'in', ['near_expiry', 'expired'])
+                ], limit=1)
+                
+                if not existing_alert:
+                    self.env['bhx.stock.alert'].create({
+                        'name': f'DATE: {line.product_id.name} (Nhập Fruit/Veg {self.name})',
+                        'alert_type': alert_type,
+                        'priority': priority,
+                        'product_id': line.product_id.id,
+                        'warehouse_id': self.warehouse_id.id,
+                        'expiry_date': self.expiry_date,
+                        'current_qty': line.weight,
+                        'note': f'Hàng Rau củ quả nhập có hạn dùng ngắn ({self.expiry_date}). Cần đẩy bán ngay.',
+                    })
+
         # Tự động gỡ cảnh báo tồn kho nếu có
         try:
             if 'bhx.stock.alert' in self.env:
@@ -240,6 +272,7 @@ class FruitVegImportLine(models.Model):
         ('C', 'Loại C - Trung bình'),
     ], string='Phân loại chất lượng', default='A')
     freshness_check = fields.Boolean(string='Đủ độ tươi', default=True)
+    lot_no = fields.Char(string='Số lô')
     unit_price = fields.Float(string='Đơn giá (đ/kg)', required=True, default=0)
     subtotal = fields.Float(
         string='Thành tiền',
@@ -257,3 +290,5 @@ class FruitVegImportLine(models.Model):
     def _onchange_product_id(self):
         if self.product_id:
             self.unit_price = self.product_id.standard_price
+            if not self.lot_no:
+                self.lot_no = f"LOT-FRUIT-{self.product_id.id}-{fields.Date.today().strftime('%m%d')}"

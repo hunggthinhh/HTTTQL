@@ -8,7 +8,9 @@
             <form string="Cảnh báo tồn kho">
                 <header>
                     <button name="action_add_to_replenishment" string="Tạo đợt châm hàng"
-                            type="object" class="btn-primary" invisible="state in ('resolved', 'ignored')"/>
+                            type="object" class="btn-primary" invisible="state in ('resolved', 'ignored') or alert_type == 'overstock'"/>
+                    <button name="action_create_stock_withdraw" string="Rút hàng về kho"
+                            type="object" class="btn-primary" invisible="alert_type != 'overstock' or state in ('resolved', 'ignored')"/>
                     <button name="action_create_import_order" string="Tạo phiếu nhập hàng"
                             type="object" class="btn-info" invisible="state in ('resolved', 'ignored')"/>
                     <button name="action_create_inventory_count" string="Tạo phiếu kiểm kê"
@@ -37,6 +39,9 @@
                         </button>
                         <button name="action_view_disposal" type="object" class="oe_stat_button" icon="fa-trash" invisible="count_disposal == 0">
                             <field name="count_disposal" widget="statinfo" string="Huỷ hàng"/>
+                        </button>
+                        <button name="action_view_adjustment" type="object" class="oe_stat_button" icon="fa-arrows-h" invisible="count_adjustment == 0">
+                            <field name="count_adjustment" widget="statinfo" string="Rút hàng"/>
                         </button>
                     </div>
                     <div class="oe_title">
@@ -118,6 +123,10 @@
                         type="object" icon="fa-trash" class="btn-warning"
                         invisible="state in ('resolved', 'ignored')"
                         help="Tạo phiếu huỷ hàng cho sản phẩm này"/>
+                <button name="action_create_stock_withdraw" string="Rút hàng"
+                        type="object" icon="fa-arrow-left" class="btn-primary"
+                        invisible="state in ('resolved', 'ignored') or alert_type != 'overstock'"
+                        help="Rút hàng dư từ kệ về kho"/>
 
             </tree>
         </field>

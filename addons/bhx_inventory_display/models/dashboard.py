@@ -18,7 +18,9 @@ class InventoryDashboard(models.Model):
         ('pos', 'Bán hàng POS'),
         ('count', 'Kiểm kê'),
         ('goods_ctrl', 'Kiểm soát hàng hóa'),
-        ('disposal', 'Xử lý hàng')
+        ('disposal', 'Xử lý hàng'),
+        ('adjustment', 'Điều chỉnh tồn kho'),
+        ('overstock_withdrawal', 'Rút hàng quá tải')
     ], string='Mã nghiệp vụ', required=True)
     color = fields.Integer(string='Color Index', default=0)
     
@@ -62,6 +64,13 @@ class InventoryDashboard(models.Model):
                 rec.count_pending = self.env['bhx.goods.control'].search_count([('state', '=', 'draft')])
             elif rec.code == 'disposal':
                 rec.count_pending = self.env['bhx.disposal'].search_count([('state', 'in', ['draft', 'confirm'])])
+            elif rec.code == 'adjustment':
+                rec.count_pending = self.env['bhx.stock.adjustment'].search_count([('state', 'in', ['draft', 'confirm', 'approved'])])
+            elif rec.code == 'overstock_withdrawal':
+                rec.count_pending = self.env['bhx.stock.alert'].search_count([
+                    ('alert_type', '=', 'overstock'),
+                    ('state', 'in', ['new', 'processing'])
+                ])
             else:
                 rec.count_pending = 0
 
@@ -108,6 +117,15 @@ class InventoryDashboard(models.Model):
         elif self.code == 'disposal':
             action = self.env.ref('bhx_audit_control.action_disposal').sudo().read()[0]
             action['domain'] = [('state', 'in', ['draft', 'confirm'])]
+        elif self.code == 'adjustment':
+            action = self.env.ref('bhx_inventory_display.action_stock_adjustment').sudo().read()[0]
+            action['domain'] = [('state', 'in', ['draft', 'confirm', 'approved'])]
+        elif self.code == 'overstock_withdrawal':
+            action = self.env.ref('bhx_inventory_display.action_stock_alert').sudo().read()[0]
+            action['domain'] = [
+                ('alert_type', '=', 'overstock'),
+                ('state', 'in', ['new', 'processing'])
+            ]
         
         # Override name to show it's filtered
         if 'name' in action:

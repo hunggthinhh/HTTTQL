@@ -23,6 +23,11 @@
                     <field name="state" widget="statusbar"
                            statusbar_visible="draft,confirm,approved,done"/>
                 </header>
+                <div class="alert alert-warning text-center o_form_header" 
+                     role="alert" 
+                     invisible="not overstock_msg">
+                    <field name="overstock_msg" readonly="1"/>
+                </div>
                 <sheet>
                     <div class="oe_title">
                         <h1><field name="name" readonly="1"/></h1>
@@ -109,10 +114,16 @@
                 <filter string="Tăng tồn kho" name="increase" domain="[('adjustment_type','=','increase')]"/>
                 <filter string="Giảm tồn kho" name="decrease" domain="[('adjustment_type','=','decrease')]"/>
                 <filter string="Chuyển trưng bày" name="transfer" domain="[('adjustment_type','=','transfer')]"/>
+                <filter string="Rút hàng (Quá tải)" name="overstock_return" domain="[('reason','=','display_return')]"/>
                 <group expand="0" string="Nhóm theo">
                     <filter string="Loại điều chỉnh" name="group_type" context="{'group_by':'adjustment_type'}"/>
+                    <filter string="Lý do" name="group_reason" context="{'group_by':'reason'}"/>
                     <filter string="Tháng" name="group_month" context="{'group_by':'date:month'}"/>
                 </group>
+                <searchpanel>
+                    <field name="warehouse_id" icon="fa-home" enable_counters="1"/>
+                    <field name="reason" icon="fa-list" enable_counters="1"/>
+                </searchpanel>
             </search>
         </field>
     </record>

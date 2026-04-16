@@ -39,6 +39,7 @@
                                       decoration-danger="has_issue == True"
                                       decoration-success="has_issue == False">
                                     <field name="product_id"/>
+                                    <field name="location_detail" optional="show"/>
                                     <field name="lot_id" optional="show"/>
                                     <field name="expiry_date" optional="show"/>
                                     <field name="days_to_expiry" optional="show"/>

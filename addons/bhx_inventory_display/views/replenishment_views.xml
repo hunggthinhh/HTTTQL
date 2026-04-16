@@ -35,7 +35,8 @@
                                 <tree editable="bottom">
                                     <field name="product_id"/>
                                     <field name="location_id" domain="[('warehouse_id', '=', parent.warehouse_id)]"/>
-                                    <field name="warehouse_stock_qty" string="Tồn kho dự trữ"
+                                    <field name="expiry_date" optional="show"/>
+                                    <field name="warehouse_stock_qty" string="Tồn dự trữ"
                                            decoration-danger="warehouse_stock_qty == 0"
                                            decoration-warning="warehouse_stock_qty &lt; qty_to_replenish"/>
                                     <field name="current_shelf_qty"/>

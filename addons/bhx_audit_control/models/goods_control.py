@@ -71,6 +71,7 @@ class GoodsControlLine(models.Model):
     product_id = fields.Many2one('product.product', string='Sản phẩm', required=True)
     lot_id = fields.Many2one('stock.lot', string='Số lô')
     expiry_date = fields.Date(string='Hạn sử dụng')
+    location_detail = fields.Char(string='Vị trí trong kho / kệ')
     days_to_expiry = fields.Integer(
         string='Số ngày còn lại',
         compute='_compute_days_to_expiry', store=True,

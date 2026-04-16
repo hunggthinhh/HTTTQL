@@ -1,4 +1,5 @@
 from odoo import models, fields, api, _
+from datetime import timedelta
 from odoo.exceptions import UserError, ValidationError
 
 
@@ -106,6 +107,15 @@ class FmcgImport(models.Model):
         self.ensure_one()
         if not self.line_ids:
             raise UserError(_('Vui lòng thêm ít nhất một sản phẩm trước khi bắt đầu kiểm hàng.'))
+        
+        # Tự động đề xuất Hạn sử dụng và Số lượng thực nhận
+        suggested_expiry = fields.Date.today() + timedelta(days=365)
+        for line in self.line_ids:
+            if not line.expiry_date:
+                line.expiry_date = suggested_expiry
+            if line.checked_qty == 0:
+                line.checked_qty = line.quantity
+
         self.write({'state': 'checking'})
 
     def _create_stock_picking(self):
@@ -167,7 +177,36 @@ class FmcgImport(models.Model):
         picking = self._create_stock_picking()
         self.write({'state': 'done', 'picking_id': picking.id})
 
-        # Tự động gỡ cảnh báo tồn kho nếu có
+        # --- Tạo cảnh báo Date nếu HSD < 30 ngày ---
+        today = fields.Date.today()
+        limit_date = today + timedelta(days=30)
+        for line in self.line_ids:
+            if line.expiry_date and line.expiry_date < limit_date:
+                alert_type = 'expired' if line.expiry_date <= today else 'near_expiry'
+                priority = '3' if alert_type == 'expired' else '2'
+                
+                # Kiểm tra xem sản phẩm này đã có cảnh báo date chưa để tránh trùng lặp quá nhiều
+                existing_alert = self.env['bhx.stock.alert'].search([
+                    ('product_id', '=', line.product_id.id),
+                    ('warehouse_id', '=', self.warehouse_id.id),
+                    ('expiry_date', '=', line.expiry_date),
+                    ('state', 'in', ['new', 'processing']),
+                    ('alert_type', 'in', ['near_expiry', 'expired'])
+                ], limit=1)
+                
+                if not existing_alert:
+                    self.env['bhx.stock.alert'].create({
+                        'name': f'DATE: {line.product_id.name} (Nhập từ {self.name})',
+                        'alert_type': alert_type,
+                        'priority': priority,
+                        'product_id': line.product_id.id,
+                        'warehouse_id': self.warehouse_id.id,
+                        'expiry_date': line.expiry_date,
+                        'current_qty': line.checked_qty,
+                        'note': f'Hàng nhập có hạn dùng ngắn ({line.expiry_date}). Lô: {line.lot_no or "N/A"}. Cần ưu tiên bán trước.',
+                    })
+
+        # Tự động gỡ cảnh báo tồn kho nếu có (hết hàng -> có hàng)
         try:
             if 'bhx.stock.alert' in self.env:
                 product_ids = self.line_ids.mapped('product_id').ids
@@ -229,7 +268,7 @@ class FmcgImportLine(models.Model):
         related='product_id.barcode',
         store=True,
     )
-    lot_no = fields.Char(string='Số lô / HSD')
+    lot_no = fields.Char(string='Số lô')
     expiry_date = fields.Date(string='Hạn sử dụng')
     quantity = fields.Float(string='SL đặt hàng', required=True, default=0)
     checked_qty = fields.Float(string='SL thực nhận', default=0)
@@ -251,8 +290,7 @@ class FmcgImportLine(models.Model):
     def _onchange_product_id(self):
         if self.product_id:
             self.unit_price = self.product_id.standard_price
+            if not self.expiry_date:
+                self.expiry_date = fields.Date.today() + timedelta(days=365)
             if not self.lot_no:
-                import random
-                import string
-                random_str = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
-                self.lot_no = f"LOT-FMCG-{random_str}"
+                self.lot_no = f"LOT-FMCG-{self.product_id.id}-{fields.Date.today().strftime('%m%d')}"
