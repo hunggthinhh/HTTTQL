@@ -22,6 +22,7 @@
         'views/promotion_views.xml',
         'views/bhx_pos_templates.xml',
         'views/res_config_settings_views.xml',
+        'views/payment_qr_wizard_views.xml',
         'views/menu.xml',
 
     ],

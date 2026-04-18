@@ -71,7 +71,7 @@ class BHXPosController(http.Controller):
                     'success': True, 
                     'order_name': new_order.name, 
                     'state': 'draft',
-                    'qr_url': self._generate_vietqr_url(new_order)
+                    'qr_url': new_order._generate_vietqr_url()
                 }
 
             new_order.action_done()
@@ -90,23 +90,6 @@ class BHXPosController(http.Controller):
             'is_paid': (order.state == 'done')
         }
 
-    def _generate_vietqr_url(self, order):
-        """Tạo link VietQR (Sử dụng getattr để tránh lỗi 500 nếu chưa upgrade database)"""
-        company = order.company_id
-        
-        # Nếu chưa upgrade module, các trường này sẽ chưa tồn tại
-        bank_id = getattr(company, 'sepay_bank_id', 'MB') or 'MB'
-        account_no = getattr(company, 'sepay_account_no', '123456789') or '123456789'
-        account_name = getattr(company, 'sepay_account_name', 'CONG TY BACH HOA XANH') or 'CONG TY BACH HOA XANH'
-        
-        base_url = "https://img.vietqr.io/image"
-        template = "compact2"
-        
-        amount = int(order.total_amount)
-        description = order.name 
-        
-        url = f"{base_url}/{bank_id}-{account_no}-{template}.png?amount={amount}&addInfo={description}&accountName={account_name}"
-        return url
 
     @http.route('/bhx/pos/search_customer', type='json', auth='user')
     def search_customer(self, phone):

@@ -21,15 +21,22 @@ services:
       - HOST=db
       - USER=odoo
       - PASSWORD=odoo
+      - DB=data
     volumes:
       - odoo_data:/var/lib/odoo
       - ./addons:/mnt/extra-addons
+    command: odoo --db_host=db --db_user=odoo --db_password=odoo --database=data --proxy-mode
 
 # Deploy: Quick Tunnel (miễn phí, không cần domain)
-  cloudflared:
-    image: cloudflare/cloudflared:latest
+  ngrok:
+    image: ngrok/ngrok:latest
     restart: unless-stopped
-    command: tunnel --url http://odoo:8069
+    environment:
+      - NGROK_AUTHTOKEN=3CXdoaaOW0blLgxVXjQ6lR9AkPa_Y9E1NdoPySEfhuQS4EGS
+    command:
+      - "http"
+      - "--domain=breeding-cabbie-stick.ngrok-free.dev"
+      - "odoo:8069"
     depends_on:
       - odoo
 

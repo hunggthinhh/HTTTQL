@@ -7,3 +7,4 @@ access_sales_order_line_user,bhx.sales.order.line user,model_bhx_sales_order_lin
 access_sales_order_line_manager,bhx.sales.order.line manager,model_bhx_sales_order_line,bhx_sales.group_sales_manager,1,1,1,1
 access_promotion_user,bhx.promotion user,model_bhx_promotion,bhx_sales.group_sales_user,1,0,0,0
 access_promotion_manager,bhx.promotion manager,model_bhx_promotion,bhx_sales.group_sales_manager,1,1,1,1
+access_payment_qr_wizard_user,bhx.payment.qr.wizard user,model_bhx_payment_qr_wizard,base.group_user,1,1,1,1

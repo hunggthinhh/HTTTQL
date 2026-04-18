@@ -1,5 +1,8 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
 class SalesOrder(models.Model):
@@ -81,9 +84,14 @@ class SalesOrder(models.Model):
         return super().create(vals_list)
 
     def action_done(self):
+        self.ensure_one()
         if not self.line_ids:
             raise UserError(_('Vui lòng thêm sản phẩm trước khi thanh toán.'))
-        
+
+        # Nếu là Chuyển khoản và đang nháp -> Hiện QR chờ thanh toán (trừ khi gọi từ webhook)
+        if self.payment_method == 'transfer' and self.state == 'draft' and not self.env.context.get('skip_qr_wizard'):
+            return self.action_show_qr_wizard()
+
         # 1. Tự động trừ tồn kho kệ lẻ (Module 2 - Custom Field)
         for line in self.line_ids:
             display_lines = self.env['bhx.display.location.line'].search([
@@ -174,6 +182,44 @@ class SalesOrder(models.Model):
             self.message_post(body=_("LỖI TRỪ KHO: %s") % str(e))
                 
         return picking
+
+    def action_show_qr_wizard(self):
+        """Mở wizard hiển thị mã QR thanh toán"""
+        self.ensure_one()
+        view = self.env.ref('bhx_sales.view_bhx_payment_qr_wizard_form')
+        return {
+            'name': _('Thanh toán VietQR'),
+            'type': 'ir.actions.act_window',
+            'view_mode': 'form',
+            'res_model': 'bhx.payment.qr.wizard',
+            'views': [(view.id, 'form')],
+            'view_id': view.id,
+            'target': 'new',
+            'context': {
+                'default_order_id': self.id,
+                'default_qr_url': self._generate_vietqr_url(),
+                'default_amount': self.total_amount,
+                'default_order_name': self.name,
+            }
+        }
+
+    def _generate_vietqr_url(self):
+        """Tạo link VietQR từ cấu hình SePay"""
+        self.ensure_one()
+        company = self.company_id
+        
+        bank_id = getattr(company, 'sepay_bank_id', 'MB') or 'MB'
+        account_no = getattr(company, 'sepay_account_no', '123456789') or '123456789'
+        account_name = getattr(company, 'sepay_account_name', 'CONG TY BACH HOA XANH') or 'CONG TY BACH HOA XANH'
+        
+        base_url = "https://img.vietqr.io/image"
+        template = "compact2"
+        
+        amount = int(self.total_amount)
+        description = self.name 
+        
+        url = f"{base_url}/{bank_id}-{account_no}-{template}.png?amount={amount}&addInfo={description}&accountName={account_name}"
+        return url
 
     def action_done_and_next(self):
         self.action_done()

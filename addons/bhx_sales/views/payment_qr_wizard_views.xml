@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_bhx_payment_qr_wizard_form" model="ir.ui.view">
+        <field name="name">bhx.payment.qr.wizard.form</field>
+        <field name="model">bhx.payment.qr.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Thanh toán VietQR">
+                <sheet>
+                    <div class="alert alert-info text-center" role="alert" invisible="state == 'done'">
+                        Vui lòng quét mã QR bên dưới để thanh toán. 
+                        Đơn hàng sẽ tự động hoàn thành sau khi hệ thống nhận được tiền.
+                    </div>
+                    <div class="alert alert-success text-center" role="alert" invisible="state != 'done'">
+                        Đơn hàng đã được thanh toán thành công!
+                    </div>
+                    
+                    <field name="qr_html" readonly="1" nolabel="1"/>
+                    
+                    <group invisible="1">
+                        <field name="order_id"/>
+                        <field name="qr_url"/>
+                        <field name="state"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_check_payment" string="Tôi đã chuyển tiền - Kiểm tra ngay" type="object" class="btn-primary" invisible="state == 'done'"/>
+                    <button name="action_confirm_manually" string="Xác nhận thủ công" type="object" class="btn-secondary" invisible="state == 'done'" groups="base.group_system"/>
+                    <button string="Đóng" class="btn-secondary" special="cancel" invisible="state != 'done'"/>
+                    <button string="Huỷ bỏ" class="btn-secondary" special="cancel" invisible="state == 'done'"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

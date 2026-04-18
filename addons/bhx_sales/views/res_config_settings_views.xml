@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <record id="res_config_settings_view_form_bhx" model="ir.ui.view">
-        <name>res.config.settings.view.form.inherit.bhx.sales</name>
-        <model>res.config.settings</model>
-        <priority>99</priority>
-        <inherit_id ref="base.res_config_settings_view_form" />
-        <arch type="xml">
-            <xpath expr="//div[hasclass('settings')]" position="inside">
+        <field name="name">res.config.settings.view.form.inherit.bhx.sales</field>
+        <field name="model">res.config.settings</field>
+        <field name="priority">99</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
                 <div class="app_settings_block" data-string="BHX POS" string="BHX POS" data-key="bhx_sales">
                     <h2>Cấu hình Thanh toán SePay</h2>
                     <div class="row mt16 o_settings_container">
@@ -60,15 +60,15 @@
                     </div>
                 </div>
             </xpath>
-        </arch>
+        </field>
     </record>
 
     <record id="action_bhx_sales_config" model="ir.actions.act_window">
-        <name>Settings</name>
-        <type>ir.actions.act_window</type>
-        <res_model>res.config.settings</res_model>
-        <view_mode>form</view_mode>
-        <target>inline</target>
-        <context>{'module' : 'bhx_sales'}</context>
+        <field name="name">Settings</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">res.config.settings</field>
+        <field name="view_mode">form</field>
+        <field name="target">inline</field>
+        <field name="context">{'module' : 'bhx_sales'}</field>
     </record>
 </odoo>
