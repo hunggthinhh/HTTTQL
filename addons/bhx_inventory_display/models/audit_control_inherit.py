@@ -379,10 +379,45 @@ class Disposal(models.Model):
     alert_id = fields.Many2one('bhx.stock.alert', string='Từ cảnh báo tồn kho', readonly=True)
     
     def action_approve(self):
-        res = super(Disposal, self).action_approve()
+        """
+        Ghi đè action_approve để trừ tồn kho trên kệ trưng bày sau khi Odoo scrap xong.
+        """
+        # 1. Chạy logic gốc (Tạo scrap Odoo) và các logic kế thừa khác (nếu có)
+        res = super().action_approve()
+        
+        # 2. Đóng cảnh báo nếu có
         if self.alert_id:
             self.alert_id.write({
                 'state': 'resolved', 
                 'note': f'[Tự động] Đóng cảnh báo thông qua phiếu huỷ hàng {self.name}'
             })
+            
+        # 3. Trừ tồn kho trên kệ cho các dòng có chỉ định vị trí kệ
+        for line in self.line_ids:
+            if hasattr(line, 'display_location_id') and line.display_location_id:
+                display_line = self.env['bhx.display.location.line'].search([
+                    ('location_id', '=', line.display_location_id.id),
+                    ('product_id', '=', line.product_id.id)
+                ], limit=1)
+                if display_line:
+                    display_line.current_qty -= line.qty
+                    
         return res
+
+class DisposalLine(models.Model):
+    _inherit = 'bhx.disposal.line'
+
+    display_location_id = fields.Many2one('bhx.display.location', string='Vị trí kệ')
+
+    @api.onchange('product_id')
+    def _onchange_product_shelf(self):
+        """Tự động gợi ý kệ trưng bày khi chọn sản phẩm."""
+        if self.product_id:
+            warehouse = self.disposal_id.warehouse_id or self.env['stock.warehouse'].search([], limit=1)
+            if warehouse:
+                display_line = self.env['bhx.display.location.line'].search([
+                    ('product_id', '=', self.product_id.id),
+                    ('location_id.warehouse_id', '=', warehouse.id)
+                ], limit=1)
+                if display_line:
+                    self.display_location_id = display_line.location_id

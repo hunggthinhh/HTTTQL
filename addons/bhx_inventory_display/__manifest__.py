@@ -25,6 +25,7 @@
         'views/stock_adjustment_views.xml',
         'views/dashboard_views.xml',
         'views/audit_control_inherit_views.xml',
+        'views/disposal_inherit_views.xml',
         'views/menu.xml',
     ],
     'installable': True,

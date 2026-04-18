@@ -120,7 +120,7 @@ class Disposal(models.Model):
                 scrap_vals['lot_id'] = line.lot_id.id
 
             scrap = self.env['stock.scrap'].create(scrap_vals)
-            scrap.action_validate()
+            scrap.do_scrap()
 
     def action_done(self):
         self.write({'state': 'done'})
@@ -189,12 +189,15 @@ class DisposalLine(models.Model):
         warehouse = self.disposal_id.warehouse_id or self.env['stock.warehouse'].search([], limit=1)
         if warehouse:
             # Tìm số lô & HSD gợi ý (Ưu tiên lô gần hết hạn nhất)
-            quant = self.env['stock.quant'].search([
+            quants = self.env['stock.quant'].search([
                 ('product_id', '=', self.product_id.id),
                 ('location_id', 'child_of', warehouse.lot_stock_id.id),
                 ('lot_id', '!=', False),
                 ('quantity', '>', 0)
-            ], order='lot_id.expiration_date asc', limit=1)
+            ])
+            # Sắp xếp trong Python vì Odoo không hỗ trợ order theo related field trong search quants
+            quants = sorted(quants, key=lambda q: q.lot_id.expiration_date or fields.Date.to_date('9999-12-31'))
+            quant = quants[0] if quants else False
             
             if quant:
                 self.lot_id = quant.lot_id

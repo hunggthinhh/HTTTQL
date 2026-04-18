@@ -89,6 +89,16 @@ class StockAdjustment(models.Model):
             raise UserError(_('Vui lòng thêm ít nhất một sản phẩm.'))
         self.write({'state': 'confirm'})
 
+    def action_start_execution(self):
+        """Bắt đầu thực hiện ngay, bỏ qua bước phê duyệt (Dành cho Rút hàng quá tải)."""
+        self.ensure_one()
+        if not self.line_ids:
+            raise UserError(_('Vui lòng thêm ít nhất một sản phẩm.'))
+        self.write({
+            'state': 'approved',
+            'approved_id': self.env.user.id,
+        })
+
     def action_approve(self):
         self.ensure_one()
         self.write({

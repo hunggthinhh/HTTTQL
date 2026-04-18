@@ -64,10 +64,49 @@ class BHXPosController(http.Controller):
                     'discount_pct': line.get('discount_pct', 0),
                 }))
             new_order = request.env['bhx.sales.order'].create(order_vals)
+            
+            # Nếu là chuyển khoản, không xác nhận ngay mà chờ Webhook
+            if order_vals['payment_method'] == 'transfer':
+                return {
+                    'success': True, 
+                    'order_name': new_order.name, 
+                    'state': 'draft',
+                    'qr_url': self._generate_vietqr_url(new_order)
+                }
+
             new_order.action_done()
-            return {'success': True, 'order_name': new_order.name}
+            return {'success': True, 'order_name': new_order.name, 'state': 'done'}
         except Exception as e:
             return {'success': False, 'error': str(e)}
+
+    @http.route('/bhx/pos/check_order_status', type='json', auth='user')
+    def check_order_status(self, order_name):
+        order = request.env['bhx.sales.order'].search([('name', '=', order_name)], limit=1)
+        if not order:
+            return {'success': False, 'error': 'Order not found'}
+        return {
+            'success': True, 
+            'state': order.state,
+            'is_paid': (order.state == 'done')
+        }
+
+    def _generate_vietqr_url(self, order):
+        """Tạo link VietQR (Sử dụng getattr để tránh lỗi 500 nếu chưa upgrade database)"""
+        company = order.company_id
+        
+        # Nếu chưa upgrade module, các trường này sẽ chưa tồn tại
+        bank_id = getattr(company, 'sepay_bank_id', 'MB') or 'MB'
+        account_no = getattr(company, 'sepay_account_no', '123456789') or '123456789'
+        account_name = getattr(company, 'sepay_account_name', 'CONG TY BACH HOA XANH') or 'CONG TY BACH HOA XANH'
+        
+        base_url = "https://img.vietqr.io/image"
+        template = "compact2"
+        
+        amount = int(order.total_amount)
+        description = order.name 
+        
+        url = f"{base_url}/{bank_id}-{account_no}-{template}.png?amount={amount}&addInfo={description}&accountName={account_name}"
+        return url
 
     @http.route('/bhx/pos/search_customer', type='json', auth='user')
     def search_customer(self, phone):
@@ -390,6 +429,34 @@ input{{font-family:inherit;outline:none}}
     </div>
   </div>
 </div>
+
+<!-- QR Modal -->
+<div id="qr-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,.85); backdrop-filter:blur(10px); z-index:9999; flex-direction:column; align-items:center; justify-content:center; gap:20px; animation:fadeIn .3s var(--ease)">
+    <div style="background:white; padding:30px; border-radius:24px; text-align:center; box-shadow:0 20px 50px rgba(0,0,0,0.5); max-width:400px; width:90%">
+        <h3 style="color:#1e293b; margin-bottom:5px; font-size:1.4rem">Quét mã để thanh toán</h3>
+        <p style="color:#64748b; font-size:0.9rem; margin-bottom:20px">Vui lòng không thay đổi nội dung chuyển khoản</p>
+        <div id="qr-img-container" style="background:#f1f5f9; padding:15px; border-radius:16px; margin-bottom:20px; display:inline-block">
+            <img id="qr-img" src="" style="width:250px; height:250px; display:block"/>
+        </div>
+        <div style="text-align:left; background:#f8fafc; padding:15px; border-radius:12px; border:1px solid #e2e8f0; margin-bottom:20px">
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px"><span style="color:#64748b; font-size:0.8rem">Số tiền:</span><b id="qr-amt" style="color:#059669; font-size:1.1rem">0 ₫</b></div>
+            <div style="display:flex; justify-content:space-between"><span style="color:#64748b; font-size:0.8rem">Nội dung:</span><b id="qr-msg" style="color:#2563eb; font-size:1rem">...</b></div>
+        </div>
+        <div style="display:flex; gap:10px">
+            <button onclick="P.cancelQR()" style="flex:1; background:#f1f5f9; color:#475569; border:none; padding:12px; border-radius:10px; font-weight:600">Huỷ bỏ</button>
+            <button id="btn-check-manual" onclick="P.checkPaymentStatusManual()" style="flex:1; background:#10b981; color:white; border:none; padding:12px; border-radius:10px; font-weight:600">Đã chuyển tiền</button>
+        </div>
+        <div style="margin-top:15px; display:flex; align-items:center; justify-content:center; gap:8px; color:#64748b; font-size:0.8rem">
+            <div class="spinner" style="width:14px; height:14px; border:2px solid #e2e8f0; border-top-color:#10b981; border-radius:50%; animation:spin 1s linear infinite"></div>
+            Đang chờ hệ thống xác nhận...
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes fadeIn {{ from {{ opacity: 0; }} to {{ opacity: 1; }} }}
+@keyframes spin {{ to {{ transform: rotate(360deg); }} }}
+</style>
 
 </div><!-- /app -->
 

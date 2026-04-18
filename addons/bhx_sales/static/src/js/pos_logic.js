@@ -1,6 +1,8 @@
 'use strict';
 var P = (function() {
     var S = {sid:0, prods:[], cats:[], cart:[], selIdx:-1, mode:'qty', payMeth:'cash', payInp:'', sq:'', cashBal:0};
+    var pollInt = null;
+    var pollName = '';
 
     function vnd(n) {
         return new Intl.NumberFormat('vi-VN', {style:'currency', currency:'VND'}).format(n || 0);
@@ -292,7 +294,13 @@ var P = (function() {
             lines: lines
         };
         rpc('/bhx/pos/validate_order', {order_data: orderData}).then(function(r) {
-            if (r && r.success) { okScreen(r.order_name); }
+            if (r && r.success) { 
+                if (r.state === 'draft' && r.qr_url) {
+                    showQRModal(r.qr_url, r.order_name);
+                } else {
+                    okScreen(r.order_name); 
+                }
+            }
             else { alert('Loi: ' + (r ? r.error : 'Unknown')); }
         }).catch(function() {
             alert('Loi ket noi!');
@@ -300,6 +308,59 @@ var P = (function() {
             btn.disabled = false;
             btn.textContent = 'XAC NHAN THANH TOAN';
         });
+    }
+
+    function showQRModal(url, name) {
+        pollName = name;
+        $('qr-img').src = url;
+        $('qr-msg').textContent = name;
+        $('qr-amt').textContent = vnd(total());
+        $('qr-modal').style.display = 'flex';
+        startPolling();
+    }
+
+    function startPolling() {
+        stopPolling();
+        pollInt = setInterval(function() {
+            checkPaymentStatus();
+        }, 3000); // Mỗi 3 giây check 1 lần
+    }
+
+    function stopPolling() {
+        if (pollInt) { clearInterval(pollInt); pollInt = null; }
+    }
+
+    function checkPaymentStatus() {
+        if (!pollName) return;
+        rpc('/bhx/pos/check_order_status', {order_name: pollName}).then(function(r) {
+            if (r && r.success && r.is_paid) {
+                stopPolling();
+                $('qr-modal').style.display = 'none';
+                okScreen(pollName);
+                pollName = '';
+            }
+        });
+    }
+
+    function cancelQR() {
+        if (confirm('Bạn chắc chắn muốn huỷ giao dịch này?')) {
+            stopPolling();
+            $('qr-modal').style.display = 'none';
+            pollName = '';
+        }
+    }
+
+    function checkPaymentStatusManual() {
+        checkPaymentStatus();
+        // Feedback cho người dùng
+        var btn = $('btn-check-manual');
+        var old = btn.textContent;
+        btn.textContent = 'Đang kiểm tra...';
+        btn.disabled = true;
+        setTimeout(function() {
+            btn.textContent = old;
+            btn.disabled = false;
+        }, 1000);
     }
 
     function okScreen(name) {
@@ -374,7 +435,8 @@ var P = (function() {
         init: init, show: show, add: add, chg: chg, rm: rm, sel: sel,
         cat: cat, setMode: setMode, np: np, goPayment: goPayment,
         payM: payM, pnp: pnp, confirm: confirm, newOrder: newOrder,
-        printReceipt: printReceipt, goToSpin: goToSpin
+        printReceipt: printReceipt, goToSpin: goToSpin,
+        cancelQR: cancelQR, checkPaymentStatusManual: checkPaymentStatusManual
     };
 })();
 

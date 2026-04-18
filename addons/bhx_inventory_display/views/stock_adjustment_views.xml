@@ -7,14 +7,24 @@
         <field name="arch" type="xml">
             <form string="Phiếu điều chỉnh tồn kho">
                 <header>
+                    <!-- Nút dành riêng cho Rút hàng quá tải -->
+                    <button name="action_start_execution" string="Bắt đầu thực hiện"
+                            type="object" class="btn-primary" 
+                            invisible="reason != 'display_return' or state != 'draft'"/>
+                    
+                    <!-- Nút dành cho các loại điều chỉnh khác -->
                     <button name="action_confirm" string="Gửi duyệt"
-                            type="object" class="btn-primary" invisible="state != 'draft'"/>
+                            type="object" class="btn-primary" 
+                            invisible="reason == 'display_return' or state != 'draft'"/>
+
                     <button name="action_approve" string="Phê duyệt"
                             type="object" class="btn-success"
                             invisible="state != 'confirm'"
                             groups="bhx_inventory_display.group_inventory_manager"/>
+                    
                     <button name="action_done" string="Hoàn thành"
-                            type="object" class="btn-primary" invisible="state != 'approved'"/>
+                            type="object" class="btn-primary" 
+                            invisible="state != 'approved'"/>
                     <button name="action_cancel" string="Huỷ"
                             type="object" class="btn-danger"
                             invisible="state in ('done','cancel')"/>

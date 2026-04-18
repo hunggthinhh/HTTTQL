@@ -75,11 +75,7 @@ class Replenishment(models.Model):
         # Cập nhật tồn kho trên kệ trưng bày
         for line in self.line_ids:
             # Kiểm tra còn đủ hàng trong kho không
-            quant = self.env['stock.quant'].search([
-                ('product_id', '=', line.product_id.id),
-                ('location_id', '=', self.warehouse_id.lot_stock_id.id),
-            ], limit=1)
-            available_qty = quant.quantity - quant.reserved_quantity if quant else 0
+            available_qty = line.product_id.with_context(warehouse=self.warehouse_id.id).qty_available
 
             if line.qty_to_replenish > available_qty:
                 raise UserError(
@@ -199,14 +195,10 @@ class ReplenishmentLine(models.Model):
                 ], limit=1)
                 line.current_shelf_qty = display_line.current_qty if display_line else 0
 
-                # Tồn kho thực tế trong kho dự trữ
+                # Tồn kho thực tế trong kho dự trữ (Đồng bộ với module Inventory Odoo)
                 warehouse = line.replenishment_id.warehouse_id
                 if warehouse:
-                    quant = self.env['stock.quant'].search([
-                        ('product_id', '=', line.product_id.id),
-                        ('location_id', '=', warehouse.lot_stock_id.id),
-                    ], limit=1)
-                    line.warehouse_stock_qty = (quant.quantity - quant.reserved_quantity) if quant else 0
+                    line.warehouse_stock_qty = line.product_id.with_context(warehouse=warehouse.id).qty_available
                 else:
                     line.warehouse_stock_qty = 0
             else:

@@ -21,6 +21,7 @@
         'views/sales_order_views.xml',
         'views/promotion_views.xml',
         'views/bhx_pos_templates.xml',
+        'views/res_config_settings_views.xml',
         'views/menu.xml',
 
     ],
