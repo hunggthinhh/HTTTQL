@@ -41,6 +41,7 @@
                             <field name="close_time" readonly="1"/>
                             <field name="opening_cash"/>
                             <field name="expected_cash" readonly="1" widget="monetary" decoration-bf="1" decoration-success="1"/>
+                            <field name="total_bank" readonly="1" widget="monetary" decoration-bf="1" decoration-info="1"/>
                             <field name="closing_cash"/>
                             <field name="currency_id" invisible="1"/>
                         </group>
@@ -48,15 +49,22 @@
                     <notebook>
                         <page string="Đơn hàng trong ca" name="orders">
                             <field name="order_ids" readonly="1">
-                                <tree decoration-success="state == 'done'" decoration-danger="state == 'refund'">
+                                <tree decoration-info="state == 'draft'"
+                                      decoration-success="state == 'done'"
+                                      decoration-warning="state in ('partial_refund', 'refund')"
+                                      decoration-danger="state == 'cancel'">
                                     <field name="name"/>
                                     <field name="date_order"/>
                                     <field name="customer_name"/>
                                     <field name="customer_phone"/>
                                     <field name="payment_method"/>
-                                    <field name="total_amount" widget="monetary"/>
+                                    <field name="total_amount" widget="monetary" decoration-bf="1"/>
                                     <field name="currency_id" invisible="1"/>
-                                    <field name="state" widget="badge"/>
+                                    <field name="state" widget="badge"
+                                           decoration-info="state == 'draft'"
+                                           decoration-success="state == 'done'"
+                                           decoration-warning="state in ('partial_refund', 'refund')"
+                                           decoration-danger="state == 'cancel'"/>
                                 </tree>
                             </field>
                         </page>
@@ -79,9 +87,9 @@
         <field name="name">bhx.sales.shift.tree</field>
         <field name="model">bhx.sales.shift</field>
         <field name="arch" type="xml">
-            <tree decoration-success="state == 'reconciled'"
-                  decoration-info="state == 'open'"
-                  decoration-muted="state == 'closed'">
+            <tree decoration-success="state == 'open'"
+                  decoration-warning="state == 'closed'"
+                  decoration-info="state == 'reconciled'">
                 <field name="name"/>
                 <field name="date"/>
                 <field name="shift_type"/>
@@ -90,13 +98,14 @@
                 <field name="open_time"/>
                 <field name="close_time"/>
                 <field name="expected_cash" widget="monetary" decoration-bf="1"/>
+                <field name="total_bank" widget="monetary" decoration-bf="1" decoration-info="1"/>
                 <field name="total_transactions"/>
-                <field name="total_revenue" widget="monetary"/>
+                <field name="total_revenue" widget="monetary" decoration-bf="1"/>
                 <field name="currency_id" invisible="1"/>
                 <field name="state" widget="badge"
-                       decoration-success="state == 'reconciled'"
-                       decoration-info="state == 'open'"
-                       decoration-warning="state == 'closed'"/>
+                       decoration-success="state == 'open'"
+                       decoration-warning="state == 'closed'"
+                       decoration-info="state == 'reconciled'"/>
             </tree>
         </field>
     </record>

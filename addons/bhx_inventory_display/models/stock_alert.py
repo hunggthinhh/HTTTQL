@@ -491,3 +491,140 @@ class StockAlert(models.Model):
                         'current_qty': current_qty,
                         'note': f'Lô hàng {lot.name} sắp/đã hết hạn vào ngày {exp_date}.',
                     })
+    @api.model
+    def cron_generate_low_stock_alerts(self):
+        """Tự động quét tồn kho Odoo và tạo cảnh báo + Phiếu mua hàng khi dưới mức tối thiểu:
+        - FMCG (BHX FMCG): < 50
+        - Hàng Fresh (BHX Hàng Fresh): < 30
+        - Rau củ quả (BHX Rau củ quả): < 20
+        Kết nối trực tiếp stock.quant của Odoo (qty_available) để không bỏ sót hàng hết (tồn = 0).
+        """
+        # Ngưỡng định mức theo danh mục
+        THRESHOLDS = {
+            'fmcg': 50,
+            'fresh': 30,
+            'veg': 20,
+        }
+
+        # Lấy tất cả sản phẩm lưu kho đang bán
+        products = self.env['product.product'].search([
+            ('sale_ok', '=', True),
+            ('type', '=', 'product'),
+        ])
+        warehouses = self.env['stock.warehouse'].search([])
+
+        for wh in warehouses:
+            for product in products:
+                # Dùng qty_available của Odoo - BẮT BUỘC phải dùng cách này
+                # để bắt được cả trường hợp tồn = 0 (bán hết, không còn quant record)
+                current_qty = product.with_context(warehouse=wh.id).qty_available
+
+                # Xác định ngưỡng dựa vào tên danh mục
+                categ_name = (product.categ_id.name or '').lower()
+
+                if any(kw in categ_name for kw in ['fresh', 'tươi', 'sống', 'thịt', 'cá', 'sữa']):
+                    threshold = THRESHOLDS['fresh']
+                    categ_label = 'BHX Hàng Fresh'
+                elif any(kw in categ_name for kw in ['rau', 'củ', 'quả', 'veg', 'fruit', 'trái cây']):
+                    threshold = THRESHOLDS['veg']
+                    categ_label = 'BHX Rau củ quả'
+                else:
+                    threshold = THRESHOLDS['fmcg']
+                    categ_label = 'BHX FMCG'
+
+                # So sánh tồn kho thực tế với ngưỡng định mức
+                if current_qty < threshold:
+                    # Tránh tạo trùng cảnh báo đang xử lý
+                    existing = self.search([
+                        ('product_id', '=', product.id),
+                        ('warehouse_id', '=', wh.id),
+                        ('alert_type', '=', 'low_stock'),
+                        ('state', 'in', ['new', 'processing']),
+                    ], limit=1)
+
+                    if existing:
+                        # Cập nhật số tồn mới nhất cho cảnh báo cũ
+                        existing.write({'current_qty': current_qty})
+                        continue
+
+                    qty_to_order = threshold * 2 - current_qty  # đặt mua đủ gấp 2 lần mức tối thiểu
+
+                    # Tạo cảnh báo mới
+                    alert_name = f'SẮP HẾT: {product.name} | Tồn: {int(current_qty)} | Kho: {wh.name}'
+                    new_alert = self.create({
+                        'name': alert_name,
+                        'alert_type': 'low_stock',
+                        'priority': '3',
+                        'product_id': product.id,
+                        'warehouse_id': wh.id,
+                        'current_qty': current_qty,
+                        'min_qty': threshold,
+                        'max_qty': threshold * 3,
+                        'note': (
+                            f'[Hệ thống tự động] Nhóm {categ_label}: '
+                            f'Tồn kho hiện tại ({current_qty}) thấp hơn mức tối thiểu ({threshold}). '
+                            f'Cần đặt mua thêm ít nhất {qty_to_order} sản phẩm.'
+                        ),
+                    })
+
+                    # Tạo Phiếu mua hàng Odoo (purchase.order) cho từng sản phẩm
+                    self._create_purchase_order_for_alert(new_alert, product, wh, qty_to_order)
+
+        return True
+
+    def _create_purchase_order_for_alert(self, alert, product, warehouse, qty_to_order):
+        """Tạo Phiếu mua hàng (purchase.order) trong module Mua hàng của Odoo."""
+        PurchaseOrder = self.env['purchase.order']
+
+        # Tìm nhà cung cấp ưu tiên của sản phẩm
+        seller = product.seller_ids and product.seller_ids[0] or False
+        if seller:
+            partner = seller.partner_id
+        else:
+            # Fallback: tìm partner tên "Kho Trung Tâm" hoặc supplier có supplier_rank > 0
+            partner = self.env['res.partner'].search(
+                [('name', 'ilike', 'Kho Trung Tâm'), ('supplier_rank', '>', 0)],
+                limit=1,
+            )
+            if not partner:
+                partner = self.env['res.partner'].search(
+                    [('supplier_rank', '>', 0)], limit=1
+                )
+
+        if not partner:
+            # Không có nhà cung cấp nào, chỉ ghi chú vào cảnh báo
+            alert.write({'note': alert.note + '\n⚠️ Chưa có nhà cung cấp — vui lòng tạo phiếu mua hàng thủ công.'})
+            return
+
+        # Kiểm tra đã có PO nháp nào cho cùng sản phẩm + nhà cung cấp không
+        existing_po = PurchaseOrder.search([
+            ('partner_id', '=', partner.id),
+            ('state', '=', 'draft'),
+        ], limit=1)
+
+        order_line_vals = {
+            'product_id': product.id,
+            'product_qty': qty_to_order,
+            'price_unit': seller.price if seller else product.standard_price,
+            'name': product.display_name,
+            'date_planned': fields.Datetime.now(),
+            'product_uom': product.uom_po_id.id or product.uom_id.id,
+        }
+
+        if existing_po:
+            # Gộp vào PO nháp đang có của nhà cung cấp
+            existing_po.write({'order_line': [(0, 0, order_line_vals)]})
+            po = existing_po
+        else:
+            # Tạo PO mới
+            po = PurchaseOrder.create({
+                'partner_id': partner.id,
+                'picking_type_id': warehouse.in_type_id.id,
+                'order_line': [(0, 0, order_line_vals)],
+            })
+
+        # Ghi liên kết vào cảnh báo
+        alert.write({
+            'state': 'processing',
+            'note': alert.note + f'\n✅ Đã tạo / cập nhật Phiếu mua hàng: {po.name}',
+        })

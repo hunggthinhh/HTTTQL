@@ -1,6 +1,6 @@
 'use strict';
 var P = (function() {
-    var S = {sid:0, prods:[], cats:[], cart:[], selIdx:-1, mode:'qty', payMeth:'cash', payInp:'', sq:'', cashBal:0};
+    var S = {sid:0, prods:[], cats:[], cart:[], selIdx:-1, mode:'qty', payMeth:'cash', payInp:'', sq:'', cashBal:0, bankBal:0};
     var pollInt = null;
     var pollName = '';
 
@@ -44,6 +44,7 @@ var P = (function() {
                 S.prods = r.products || [];
                 S.cats = r.categories || [];
                 S.cashBal = parseFloat(r.current_cash_total) || 0;
+                S.bankBal = parseFloat(r.current_bank_total) || 0;
                 rCats();
                 rProds();
             }
@@ -387,12 +388,32 @@ var P = (function() {
             else spinBtn.style.display = 'none';
         }
 
-        // Update live cash balance if payment was cash
+        // Update balances based on payment method
         if (S.payMeth === 'cash') {
             S.cashBal += grandTotal;
+        } else if (S.payMeth === 'card' || S.payMeth === 'transfer' || S.payMeth === 'ewallet') {
+            S.bankBal += grandTotal;
         }
+
+        // Update UI displays
         var cashEl = $('ok-cash');
         if (cashEl) cashEl.textContent = vnd(S.cashBal);
+        
+        var bankEl = $('ok-bank');
+        if (bankEl) bankEl.textContent = vnd(S.bankBal);
+
+        // Highlight the active payment type box
+        if (S.payMeth === 'cash') {
+            $('ok-cash-box').style.opacity = '1';
+            $('ok-bank-box').style.opacity = '0.5';
+            $('ok-cash-box').style.borderStyle = 'solid';
+            $('ok-bank-box').style.borderStyle = 'dashed';
+        } else {
+            $('ok-cash-box').style.opacity = '0.5';
+            $('ok-bank-box').style.opacity = '1';
+            $('ok-cash-box').style.borderStyle = 'dashed';
+            $('ok-bank-box').style.borderStyle = 'solid';
+        }
         
         show('s3');
     }

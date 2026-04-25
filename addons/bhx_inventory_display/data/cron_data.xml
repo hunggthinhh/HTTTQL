@@ -23,4 +23,15 @@
             <field name="numbercall">-1</field>
             <field name="active" eval="True"/>
         </record>
+        <!-- Cron Job for Low Stock Alerts (FMCG, Fresh, Veg) -->
+        <record id="cron_generate_low_stock_alerts" model="ir.cron">
+            <field name="name">Cảnh báo: Tạo tự động cảnh báo Sắp hết hàng (Theo định mức FMCG/Fresh/Veg)</field>
+            <field name="model_id" ref="model_bhx_stock_alert"/>
+            <field name="state">code</field>
+            <field name="code">model.cron_generate_low_stock_alerts()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field name="active" eval="True"/>
+        </record>
     </odoo>

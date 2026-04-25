@@ -32,7 +32,10 @@ class BHXPosController(http.Controller):
         ])
 
     @http.route('/bhx/pos/get_data', type='json', auth='user')
-    def get_pos_data(self):
+    def get_pos_data(self, **kwargs):
+        shift_id = kwargs.get('shift_id')
+        shift = request.env['bhx.sales.shift'].browse(shift_id) if shift_id else None
+        
         categories = request.env['product.category'].search_read(
             [('name', 'ilike', 'BHX')],
             ['id', 'name']
@@ -42,7 +45,13 @@ class BHXPosController(http.Controller):
             ['id', 'name', 'display_name', 'list_price', 'categ_id', 'barcode', 'uom_id', 'image_128'],
             order='display_name'
         )
-        return {'categories': categories, 'products': products}
+        
+        return {
+            'categories': categories, 
+            'products': products,
+            'current_cash_total': shift.expected_cash if shift else 0,
+            'current_bank_total': shift.total_bank if shift else 0,
+        }
 
     @http.route('/bhx/pos/validate_order', type='json', auth='user')
     def validate_pos_order(self, order_data):
@@ -387,9 +396,15 @@ input{{font-family:inherit;outline:none}}
       <div style="background:rgba(16,185,129,.1); border:2px dashed var(--g500); padding:10px 30px; border-radius:12px; margin:10px 0">
         <p style="font-size:.75rem; color:var(--d500); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px">Mã đơn hàng</p>
         <p class="ok-order" id="ok-order" style="font-size:1.5rem; font-weight:800; color:var(--g500); margin:0">...</p>
-        <div id="ok-cash-box" style="margin-top:15px; padding:10px; background:rgba(59,130,246,0.1); border-radius:8px; border:1px dashed var(--b500)">
-          <p style="font-size:.7rem; color:var(--b500); text-transform:uppercase; margin:0">Tiền mặt hiện tại trong két</p>
-          <p id="ok-cash" style="font-size:1.3rem; font-weight:700; color:var(--b500); margin:0">0 ₫</p>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:15px">
+          <div id="ok-cash-box" style="padding:10px; background:rgba(59,130,246,0.08); border-radius:10px; border:1px dashed var(--b500)">
+            <p style="font-size:.65rem; color:var(--b500); text-transform:uppercase; margin-bottom:4px">Tiền mặt trong két</p>
+            <p id="ok-cash" style="font-size:1.1rem; font-weight:800; color:var(--b500); margin:0">0 ₫</p>
+          </div>
+          <div id="ok-bank-box" style="padding:10px; background:rgba(16,185,129,0.08); border-radius:10px; border:1px dashed var(--g500)">
+            <p style="font-size:.65rem; color:var(--g500); text-transform:uppercase; margin-bottom:4px">Tiền ngân hàng/CK</p>
+            <p id="ok-bank" style="font-size:1.1rem; font-weight:800; color:var(--g500); margin:0">0 ₫</p>
+          </div>
         </div>
       </div>
       <div class="ok-acts">

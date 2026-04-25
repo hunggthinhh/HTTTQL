@@ -31,6 +31,10 @@ class SalesShift(models.Model):
         string='Tiền mặt lý thuyết', currency_field='currency_id',
         compute='_compute_revenue',
     )
+    total_bank = fields.Monetary(
+        string='Tiền ngân hàng/CK', currency_field='currency_id',
+        compute='_compute_revenue',
+    )
     total_revenue = fields.Monetary(
         string='Tổng doanh thu ca', currency_field='currency_id',
         compute='_compute_revenue',
@@ -57,9 +61,13 @@ class SalesShift(models.Model):
             shift.total_revenue = sum(done_orders.mapped('total_amount'))
             shift.total_transactions = len(done_orders)
 
-            # Calculate expected cash: Opening + All Cash orders
+            # 1. Tiền mặt: Đầu ca + Các đơn tiền mặt
             cash_orders = done_orders.filtered(lambda o: o.payment_method == 'cash')
             shift.expected_cash = shift.opening_cash + sum(cash_orders.mapped('total_amount'))
+
+            # 2. Tiền ngân hàng/CK: Các đơn không phải tiền mặt
+            bank_orders = done_orders.filtered(lambda o: o.payment_method in ('card', 'transfer', 'ewallet'))
+            shift.total_bank = sum(bank_orders.mapped('total_amount'))
 
     @api.model_create_multi
     def create(self, vals_list):

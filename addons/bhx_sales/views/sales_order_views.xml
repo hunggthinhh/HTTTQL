@@ -92,10 +92,10 @@
         <field name="name">bhx.sales.order.tree</field>
         <field name="model">bhx.sales.order</field>
         <field name="arch" type="xml">
-            <tree decoration-success="state == 'done'"
-                  decoration-warning="state == 'partial_refund'"
-                  decoration-danger="state in ('cancel','refund')"
-                  decoration-muted="state == 'cancel'">
+            <tree decoration-info="state == 'draft'"
+                  decoration-success="state == 'done'"
+                  decoration-warning="state in ('partial_refund', 'refund')"
+                  decoration-danger="state == 'cancel'">
                 <field name="name"/>
                 <field name="date_order"/>
                 <field name="shift_id"/>
@@ -103,13 +103,13 @@
                 <field name="cashier_id"/>
                 <field name="customer_name" optional="show"/>
                 <field name="payment_method"/>
-                <field name="total_amount" widget="monetary"/>
+                <field name="total_amount" widget="monetary" decoration-bf="1"/>
                 <field name="currency_id" invisible="1"/>
                 <field name="state" widget="badge"
                        decoration-info="state == 'draft'"
                        decoration-success="state == 'done'"
-                       decoration-warning="state == 'partial_refund'"
-                       decoration-danger="state in ('cancel','refund')"/>
+                       decoration-warning="state in ('partial_refund', 'refund')"
+                       decoration-danger="state == 'cancel'"/>
                 <field name="picking_id" optional="hide"/>
             </tree>
         </field>
