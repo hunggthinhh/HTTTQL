@@ -20,6 +20,8 @@
         'views/sales_shift_views.xml',
         'views/sales_order_views.xml',
         'views/promotion_views.xml',
+        'views/return_wizard_views.xml',       # new
+        'views/return_request_views.xml',    # new
         'views/bhx_pos_templates.xml',
         'views/res_config_settings_views.xml',
         'views/payment_qr_wizard_views.xml',

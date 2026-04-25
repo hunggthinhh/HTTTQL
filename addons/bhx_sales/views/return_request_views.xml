@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- FORM -->
+    <record id="view_bhx_return_request_form" model="ir.ui.view">
+        <field name="name">bhx.return.request.form</field>
+        <field name="model">bhx.return.request</field>
+        <field name="arch" type="xml">
+            <form string="Yêu cầu Đổi/Trả hàng">
+                <header>
+                    <button name="action_approve"
+                            string="Xác nhận &amp; Nhập kho"
+                            type="object"
+                            class="btn-primary"
+                            invisible="state != 'draft'"
+                            groups="bhx_sales.group_sales_manager"/>
+                    <button name="action_cancel"
+                            string="Hủy phiếu"
+                            type="object"
+                            invisible="state != 'draft'"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,approved"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="Thông tin đơn hàng">
+                            <field name="order_id" readonly="1"/>
+                            <field name="shift_id" readonly="1"/>
+                        </group>
+                        <group string="Thông tin xử lý">
+                            <field name="approved_by" readonly="1"
+                                   invisible="not approved_by"/>
+                            <field name="approved_date" readonly="1"
+                                   invisible="not approved_date"/>
+                            <field name="return_picking_id" readonly="1"
+                                   invisible="not return_picking_id"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Sản phẩm đổi/trả" name="lines">
+                            <field name="line_ids"
+                                   readonly="state != 'draft'">
+                                <tree editable="bottom">
+                                    <field name="product_id" readonly="1"/>
+                                    <field name="purchased_qty" readonly="1"
+                                           string="SL đã mua"/>
+                                    <field name="return_qty" string="SL trả"/>
+                                    <field name="refund_unit_price" readonly="1"
+                                           string="Đơn giá hoàn"/>
+                                    <field name="refund_unit_price"
+                                           string="Thành tiền hoàn"
+                                           readonly="1"
+                                           widget="monetary"
+                                           optional="show"/>
+                                </tree>
+                            </field>
+                            <group class="oe_subtotal_footer oe_right">
+                                <field name="refund_amount"
+                                       widget="monetary"
+                                       string="Tổng tiền hoàn"
+                                       options="{'currency_field': 'currency_id'}"/>
+                                <field name="currency_id" invisible="1"/>
+                            </group>
+                        </page>
+                        <page string="Lý do &amp; Ghi chú" name="note">
+                            <field name="note"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- TREE -->
+    <record id="view_bhx_return_request_tree" model="ir.ui.view">
+        <field name="name">bhx.return.request.tree</field>
+        <field name="model">bhx.return.request</field>
+        <field name="arch" type="xml">
+            <tree string="Yêu cầu Đổi/Trả"
+                  decoration-info="state == 'draft'"
+                  decoration-success="state == 'approved'"
+                  decoration-muted="state == 'cancel'">
+                <field name="name"/>
+                <field name="order_id"/>
+                <field name="shift_id"/>
+                <field name="approved_by" optional="show"/>
+                <field name="approved_date" optional="show"/>
+                <field name="refund_amount" widget="monetary" sum="Tổng tiền hoàn"/>
+                <field name="currency_id" invisible="1"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'draft'"
+                       decoration-success="state == 'approved'"
+                       decoration-danger="state == 'cancel'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- SEARCH -->
+    <record id="view_bhx_return_request_search" model="ir.ui.view">
+        <field name="name">bhx.return.request.search</field>
+        <field name="model">bhx.return.request</field>
+        <field name="arch" type="xml">
+            <search string="Tìm phiếu đổi/trả">
+                <field name="name"/>
+                <field name="order_id"/>
+                <filter string="Chờ xác nhận" name="draft"
+                        domain="[('state','=','draft')]"/>
+                <filter string="Đã xác nhận" name="approved"
+                        domain="[('state','=','approved')]"/>
+                <filter string="Hôm nay" name="today"
+                        domain="[('approved_date','&gt;=',context_today().strftime('%Y-%m-%d 00:00:00')),
+                                 ('approved_date','&lt;=',context_today().strftime('%Y-%m-%d 23:59:59'))]"/>
+                <group expand="0" string="Nhóm theo">
+                    <filter string="Cửa hàng" name="group_shift"
+                            context="{'group_by':'shift_id'}"/>
+                    <filter string="Tháng" name="group_month"
+                            context="{'group_by':'approved_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ACTION -->
+    <record id="action_bhx_return_request" model="ir.actions.act_window">
+        <field name="name">Yêu cầu Đổi/Trả</field>
+        <field name="res_model">bhx.return.request</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Chưa có phiếu đổi/trả nào. Mở từ đơn hàng đã thanh toán!
+            </p>
+        </field>
+    </record>
+</odoo>

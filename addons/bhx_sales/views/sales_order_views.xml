@@ -9,12 +9,30 @@
                 <header>
                     <button name="action_done_and_next" string="Xác nhận &amp; Bán tiếp" type="object" class="btn-success" invisible="state != 'draft'"/>
                     <button name="action_done" string="Xác nhận thanh toán" type="object" class="btn-primary" invisible="state != 'draft'"/>
-                    <button name="action_cancel" string="Huỷ đơn" type="object" class="btn-danger" invisible="state in ('done','cancel','refund')"/>
-
-                    <button name="action_refund" string="Hoàn hàng" type="object" invisible="state != 'done'"/>
+                    <button name="action_cancel" string="Huỷ đơn"
+                            type="object" class="btn-danger"
+                            invisible="state in ('done','cancel','refund','partial_refund')"/>
+                    <button name="action_open_return_wizard" string="Đổi/Trả hàng"
+                            type="object" class="btn-warning"
+                            invisible="state not in ('done', 'partial_refund')"/>
+                    <button name="action_refund" string="Hoàn toàn bộ"
+                            type="object"
+                            invisible="state != 'done'"
+                            groups="bhx_sales.group_sales_manager"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,done"/>
                 </header>
                 <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_return_requests"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-undo"
+                                invisible="return_request_count == 0">
+                            <field name="return_request_count"
+                                   widget="statinfo"
+                                   string="Đổi/Trả"/>
+                        </button>
+                    </div>
                     <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
                     <group>
                         <group string="Thông tin đơn hàng">
@@ -75,7 +93,8 @@
         <field name="model">bhx.sales.order</field>
         <field name="arch" type="xml">
             <tree decoration-success="state == 'done'"
-                  decoration-danger="state == 'refund'"
+                  decoration-warning="state == 'partial_refund'"
+                  decoration-danger="state in ('cancel','refund')"
                   decoration-muted="state == 'cancel'">
                 <field name="name"/>
                 <field name="date_order"/>
@@ -89,6 +108,7 @@
                 <field name="state" widget="badge"
                        decoration-info="state == 'draft'"
                        decoration-success="state == 'done'"
+                       decoration-warning="state == 'partial_refund'"
                        decoration-danger="state in ('cancel','refund')"/>
                 <field name="picking_id" optional="hide"/>
             </tree>
@@ -107,12 +127,19 @@
                 <filter string="Hôm nay" name="today"
                         domain="[('date_order', '&gt;=', context_today().strftime('%Y-%m-%d 00:00:00')),
                                  ('date_order', '&lt;=', context_today().strftime('%Y-%m-%d 23:59:59'))]"/>
-                <filter string="Đã thanh toán" name="done" domain="[('state','=','done')]"/>
-                <filter string="Hoàn hàng" name="refund" domain="[('state','=','refund')]"/>
+                <filter string="Đã thanh toán" name="done"
+                        domain="[('state','=','done')]"/>
+                <filter string="Hoàn một phần" name="partial_refund"
+                        domain="[('state','=','partial_refund')]"/>
+                <filter string="Đã hoàn toàn bộ" name="refund"
+                        domain="[('state','=','refund')]"/>
                 <group expand="0" string="Nhóm theo">
-                    <filter string="Phương thức TT" name="group_payment" context="{'group_by':'payment_method'}"/>
-                    <filter string="Cửa hàng" name="group_wh" context="{'group_by':'warehouse_id'}"/>
-                    <filter string="Ngày" name="group_date" context="{'group_by':'date_order:day'}"/>
+                    <filter string="Phương thức TT" name="group_payment"
+                            context="{'group_by':'payment_method'}"/>
+                    <filter string="Cửa hàng" name="group_wh"
+                            context="{'group_by':'warehouse_id'}"/>
+                    <filter string="Ngày" name="group_date"
+                            context="{'group_by':'date_order:day'}"/>
                 </group>
             </search>
         </field>

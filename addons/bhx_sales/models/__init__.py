@@ -4,3 +4,5 @@ from . import promotion
 from . import res_company
 from . import res_config_settings
 from . import payment_qr_wizard
+from . import return_request
+from . import return_wizard

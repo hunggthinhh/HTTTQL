@@ -13,5 +13,11 @@
             <field name="prefix">BH/%(year)s/%(month)s/</field>
             <field name="padding">5</field>
         </record>
+        <record id="seq_return_request" model="ir.sequence">
+            <field name="name">Phiếu đổi/trả hàng</field>
+            <field name="code">bhx.return.request</field>
+            <field name="prefix">DTH/%(year)s/%(month)s/</field>
+            <field name="padding">4</field>
+        </record>
     </data>
 </odoo>

@@ -24,6 +24,14 @@ class SalesOrder(models.Model):
         'stock.warehouse', string='Cửa hàng', required=True,
         readonly=True, store=True,
     )
+    return_request_ids = fields.One2many(
+        'bhx.return.request', 'order_id',
+        string='Phiếu đổi/trả'
+    )
+    return_request_count = fields.Integer(
+        string='Số phiếu đổi/trả',
+        compute='_compute_return_count'
+    )
 
     @api.onchange('shift_id')
     def _onchange_shift_id(self):
@@ -65,6 +73,7 @@ class SalesOrder(models.Model):
         ('done', 'Đã thanh toán'),
         ('cancel', 'Đã huỷ'),
         ('refund', 'Đã hoàn hàng'),
+        ('partial_refund', 'Hoàn một phần'), #new
     ], string='Trạng thái', default='draft', tracking=True)
 
     line_ids = fields.One2many('bhx.sales.order.line', 'order_id', string='Chi tiết hàng mua')
@@ -75,6 +84,11 @@ class SalesOrder(models.Model):
         for order in self:
             order.subtotal = sum(order.line_ids.mapped('subtotal'))
             order.total_amount = max(0, order.subtotal - order.discount_amount)
+
+    @api.depends('return_request_ids')
+    def _compute_return_count(self):
+        for order in self:
+            order.return_request_count = len(order.return_request_ids)
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -237,7 +251,7 @@ class SalesOrder(models.Model):
 
 
     def action_cancel(self):
-        if self.state == 'done':
+        if self.state in ('done', 'refund', 'partial_refund'):
             raise UserError(_('Dùng "Hoàn hàng" cho đơn đã thanh toán.'))
         self.write({'state': 'cancel'})
 
@@ -247,6 +261,52 @@ class SalesOrder(models.Model):
             raise UserError(_('Chỉ hoàn hàng đơn đã thanh toán.'))
         self.write({'state': 'refund'})
 
+    def action_open_return_wizard(self):
+        """Mở wizard chọn sản phẩm đổi/trả."""
+        self.ensure_one()
+        if self.state not in ('done', 'partial_refund'):
+            raise UserError(_('Chỉ có thể đổi/trả đơn hàng đã thanh toán.'))
+
+        # Chỉ đưa vào wizard những dòng còn hàng có thể trả
+        lines_with_available = []
+        for line in self.line_ids:
+            approved = self.env['bhx.return.request.line'].search([
+                ('order_line_id', '=', line.id),
+                ('return_id.state', '=', 'approved'),
+            ])
+            returned = sum(approved.mapped('return_qty'))
+            if line.qty - returned > 0:
+                lines_with_available.append(line.id)
+
+        if not lines_with_available:
+            raise UserError(
+                _('Tất cả sản phẩm trong đơn hàng này đã được hoàn trả hết.')
+            )
+
+        wizard = self.env['bhx.return.wizard'].create({
+            'order_id': self.id,
+            'line_ids': [(0, 0, {'order_line_id': lid})
+                         for lid in lines_with_available],
+        })
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Chọn sản phẩm đổi/trả'),
+            'res_model': 'bhx.return.wizard',
+            'res_id': wizard.id,
+            'view_mode': 'form',
+            'target': 'new',
+        }
+
+    def action_view_return_requests(self):
+        """Xem danh sách phiếu đổi/trả của đơn hàng này."""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Phiếu đổi/trả — %s') % self.name,
+            'res_model': 'bhx.return.request',
+            'view_mode': 'tree,form',
+            'domain': [('order_id', '=', self.id)],
+        }
 
 class SalesOrderLine(models.Model):
     _name = 'bhx.sales.order.line'
